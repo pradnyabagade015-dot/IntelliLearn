@@ -12,12 +12,12 @@ export default function WelcomeScreen() {
         {/* Top Hero */}
         <View style={styles.heroSection}>
           <View style={styles.logoContainer}>
-            <Text style={styles.logoEmoji}>🌿</Text>
+            <Text style={styles.logoEmoji}>💼</Text>
           </View>
           <View style={styles.badge}>
-            <Text style={styles.badgeText}>EXTC 4th Semester • Course Code: 2993512</Text>
+            <Text style={styles.badgeText}>EXTC 4th Semester • Course Code: 2994511</Text>
           </View>
-          <Text style={styles.title}>Environmental Science</Text>
+          <Text style={styles.title}>Business Model Development</Text>
           <Text style={styles.subtitle}>
             AI-powered learning for EXTC students • University of Mumbai Syllabus
           </Text>
@@ -32,14 +32,14 @@ export default function WelcomeScreen() {
             <View style={styles.featureInfo}>
               <Text style={styles.featureTitle}>Official 6 Syllabus Units</Text>
               <Text style={styles.featureDesc}>
-                Structured notes on Natural Resources, Forest/Water/Energy, Ecosystems, Biodiversity, Pollution, and Social Issues.
+                Structured notes on Entrepreneurship, Start-up Financing, IPR & Patents, Business Model Canvas, and Digital Business Management.
               </Text>
             </View>
           </View>
 
           <View style={styles.featureCard}>
             <View style={[styles.featureIcon, { backgroundColor: Colors.secondaryLight }]}>
-              <Text style={styles.featureEmoji}>🌱</Text>
+              <Text style={styles.featureEmoji}>🤖</Text>
             </View>
             <View style={styles.featureInfo}>
               <Text style={styles.featureTitle}>Context-Aware AI Tutor</Text>
@@ -56,7 +56,7 @@ export default function WelcomeScreen() {
             <View style={styles.featureInfo}>
               <Text style={styles.featureTitle}>AI Doubt Solver & Quizzes</Text>
               <Text style={styles.featureDesc}>
-                Get direct answers, explanations, examples, and exam points for any Environmental Science query.
+                Get direct answers, explanations, examples, and exam points for any Business Model Development query.
               </Text>
             </View>
           </View>
@@ -69,7 +69,7 @@ export default function WelcomeScreen() {
             onPress={() => router.replace('/(tabs)/home')}
             activeOpacity={0.8}
           >
-            <Text style={styles.primaryButtonText}>Explore Environmental Science</Text>
+            <Text style={styles.primaryButtonText}>Explore Business Model Development</Text>
             <Ionicons name="arrow-forward" size={18} color="#FFFFFF" />
           </TouchableOpacity>
 
@@ -145,7 +145,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   title: {
-    fontSize: 30,
+    fontSize: 28,
     fontWeight: '900',
     color: Colors.text,
     textAlign: 'center',

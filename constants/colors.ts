@@ -1,26 +1,26 @@
 export const Colors = {
-  primary: '#15803D', // Forest Green (Primary)
-  primaryLight: '#DCFCE7', // Light green tint
-  primaryDark: '#14532D', // Deep evergreen
-  primaryHover: '#166534',
+  primary: '#2563EB', // Royal Blue
+  primaryLight: '#EFF6FF', // Soft Blue tint
+  primaryDark: '#1E40AF', // Deep Navy Blue
+  primaryHover: '#1D4ED8',
 
-  secondary: '#0D9488', // Teal (Secondary)
-  secondaryLight: '#CCFBF1', // Light teal tint
-  secondaryDark: '#115E59',
+  secondary: '#4F46E5', // Indigo
+  secondaryLight: '#EEF2FF', // Soft Indigo tint
+  secondaryDark: '#3730A3',
 
-  accent: '#10B981', // Emerald green
-  accentLight: '#ECFDF5',
+  accent: '#0EA5E9', // Ocean Sky Blue
+  accentLight: '#F0F9FF',
 
-  background: '#F6FBF7', // Very light eco green-white
-  backgroundAlt: '#EBF5EE',
+  background: '#F8FAFC', // Slate light crisp background
+  backgroundAlt: '#F1F5F9',
   card: '#FFFFFF',
-  cardBorder: '#D1E7D6',
+  cardBorder: '#E2E8F0',
 
-  text: '#0B2B1B', // Dark forest green / near-black
-  textSecondary: '#3F6250', // Muted forest green
-  textMuted: '#6B8F7C',
+  text: '#0F172A', // Slate 900
+  textSecondary: '#475569', // Slate 600
+  textMuted: '#94A3B8', // Slate 400
 
-  success: '#15803D',
+  success: '#16A34A',
   successLight: '#DCFCE7',
   warning: '#D97706',
   warningLight: '#FEF3C7',
@@ -28,11 +28,11 @@ export const Colors = {
   dangerLight: '#FEE2E2',
 
   dark: {
-    background: '#071A10',
-    card: '#0D2E1E',
-    cardBorder: '#184732',
-    text: '#E8F5EE',
-    textSecondary: '#8EB8A1',
+    background: '#0B1120',
+    card: '#1E293B',
+    cardBorder: '#334155',
+    text: '#F8FAFC',
+    textSecondary: '#94A3B8',
   },
 } as const;
 

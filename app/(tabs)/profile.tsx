@@ -38,7 +38,7 @@ export default function ProfileScreen() {
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
-      <Header title="Student Profile" subtitle="EXTC Sem IV • Environmental Science" />
+      <Header title="Student Profile" subtitle="EXTC Sem IV • Business Model Development" />
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {/* User Card */}
@@ -64,18 +64,18 @@ export default function ProfileScreen() {
         {/* Stats Row */}
         <View style={styles.statsRow}>
           <View style={styles.statBox}>
-            <Text style={styles.statEmoji}>🌱</Text>
-            <Text style={styles.statNum}>{student?.streakDays || 6}</Text>
+            <Text style={styles.statEmoji}>⚡</Text>
+            <Text style={styles.statNum}>{student?.streakDays || 7}</Text>
             <Text style={styles.statText}>Day Streak</Text>
           </View>
           <View style={styles.statBox}>
             <Text style={styles.statEmoji}>🏆</Text>
-            <Text style={styles.statNum}>{student?.totalXp || 1850}</Text>
+            <Text style={styles.statNum}>{student?.totalXp || 1950}</Text>
             <Text style={styles.statText}>Total XP</Text>
           </View>
           <View style={styles.statBox}>
             <Text style={styles.statEmoji}>📝</Text>
-            <Text style={styles.statNum}>{student?.quizzesTaken || 18}</Text>
+            <Text style={styles.statNum}>{student?.quizzesTaken || 19}</Text>
             <Text style={styles.statText}>Quizzes</Text>
           </View>
         </View>
@@ -86,11 +86,11 @@ export default function ProfileScreen() {
 
           <View style={styles.infoRow}>
             <Text style={styles.infoLabel}>Course Name</Text>
-            <Text style={styles.infoValue}>Environmental Science</Text>
+            <Text style={styles.infoValue}>Business Model Development</Text>
           </View>
           <View style={styles.infoRow}>
             <Text style={styles.infoLabel}>Course Code</Text>
-            <Text style={styles.infoValue}>2993512</Text>
+            <Text style={styles.infoValue}>2994511</Text>
           </View>
           <View style={styles.infoRow}>
             <Text style={styles.infoLabel}>University Scheme</Text>
@@ -112,11 +112,11 @@ export default function ProfileScreen() {
 
           <TouchableOpacity
             style={styles.menuItem}
-            onPress={() => router.push('/tutor/env-2993512')}
+            onPress={() => router.push('/tutor/bmd-2994511')}
           >
             <View style={styles.menuItemLeft}>
               <Ionicons name="sparkles" size={20} color={Colors.primary} />
-              <Text style={styles.menuItemText}>Environmental AI Tutor</Text>
+              <Text style={styles.menuItemText}>Business Model AI Tutor</Text>
             </View>
             <Ionicons name="chevron-forward" size={18} color={Colors.textMuted} />
           </TouchableOpacity>

@@ -70,7 +70,7 @@ export function ChatBubble({ message }: ChatBubbleProps) {
     <View style={[styles.wrapper, isUser ? styles.userWrapper : styles.aiWrapper]}>
       {!isUser && (
         <View style={styles.avatar}>
-          <Text style={styles.avatarText}>🌱</Text>
+          <Text style={styles.avatarText}>🤖</Text>
         </View>
       )}
 
@@ -180,7 +180,7 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-end',
   },
   userTimestamp: {
-    color: '#D1FAE5',
+    color: '#DBEAFE',
   },
   aiTimestamp: {
     color: Colors.textMuted,

@@ -27,7 +27,7 @@ export default function ChapterDetailScreen() {
 
   useEffect(() => {
     const fetchSubject = async () => {
-      const det = await apiService.getDetailedSubject('env-2993512');
+      const det = await apiService.getDetailedSubject('bmd-2994511');
       if (det) {
         setDetailedSubject(det);
 
@@ -54,10 +54,10 @@ export default function ChapterDetailScreen() {
     router.push({
       pathname: '/tutor/[chapterId]',
       params: {
-        chapterId: 'env-2993512',
+        chapterId: 'bmd-2994511',
         topicNumber: topic.topicNumber,
         topicTitle: topic.title,
-        moduleName: selectedModule?.title || 'Environmental Science',
+        moduleName: selectedModule?.title || 'Business Model Development',
       },
     });
   };
@@ -66,12 +66,12 @@ export default function ChapterDetailScreen() {
     <SafeAreaView style={styles.container} edges={['top']}>
       <Header
         showBack
-        title="Environmental Science"
-        subtitle="Course Code: 2993512 • Semester IV EXTC"
+        title="Business Model Development"
+        subtitle="Course Code: 2994511 • Semester IV EXTC"
         rightAction={
           <TouchableOpacity
             style={styles.tutorHeaderBtn}
-            onPress={() => router.push('/tutor/env-2993512')}
+            onPress={() => router.push('/tutor/bmd-2994511')}
           >
             <Ionicons name="sparkles" size={15} color="#FFFFFF" />
             <Text style={styles.tutorHeaderBtnText}>AI Tutor</Text>
@@ -113,7 +113,7 @@ export default function ChapterDetailScreen() {
         {/* SYLLABUS TAB */}
         {activeTab === 'syllabus' && (
           <View style={styles.tabContent}>
-            <Text style={styles.sectionHeading}>Official 6 Syllabus Units</Text>
+            <Text style={styles.sectionHeading}>Official 6 Syllabus Units (49 Topics)</Text>
             {detailedSubject?.modules.map((mod) => (
               <View key={mod.id} style={styles.moduleCard}>
                 <TouchableOpacity
@@ -196,7 +196,7 @@ export default function ChapterDetailScreen() {
                     activeOpacity={0.8}
                   >
                     <Ionicons name="sparkles" size={16} color="#FFFFFF" />
-                    <Text style={styles.askAiTutorBannerText}>Ask Environmental AI Tutor</Text>
+                    <Text style={styles.askAiTutorBannerText}>Ask Business Model AI Tutor</Text>
                   </TouchableOpacity>
                 </View>
 
@@ -235,7 +235,7 @@ export default function ChapterDetailScreen() {
                 {/* 4. Real-World Example */}
                 <View style={[styles.noteSection, { backgroundColor: Colors.primaryLight }]}>
                   <View style={styles.noteSectionHeader}>
-                    <Text style={styles.noteSectionEmoji}>🏭</Text>
+                    <Text style={styles.noteSectionEmoji}>🏢</Text>
                     <Text style={[styles.noteSectionTitle, { color: Colors.primaryDark }]}>
                       4. Simple Real-World Example
                     </Text>
@@ -300,7 +300,7 @@ export default function ChapterDetailScreen() {
             {detailedSubject && (
               <View style={styles.infoContainer}>
                 <View style={styles.infoCard}>
-                  <Text style={styles.infoHeading}>Course Details (2993512)</Text>
+                  <Text style={styles.infoHeading}>Course Details (2994511)</Text>
                   <View style={styles.infoPair}>
                     <Text style={styles.infoKey}>Vertical / Stream:</Text>
                     <Text style={styles.infoVal}>{detailedSubject.vertical}</Text>
@@ -456,7 +456,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 10,
     borderBottomWidth: 1,
-    borderBottomColor: '#E6F0E8',
+    borderBottomColor: '#F1F5F9',
   },
   activeTopicItem: {
     backgroundColor: Colors.primaryLight,

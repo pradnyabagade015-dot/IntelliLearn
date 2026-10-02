@@ -40,7 +40,7 @@ export function QuizCard({ quiz, onPress }: QuizCardProps) {
     >
       <View style={styles.topRow}>
         <View style={styles.subjectTag}>
-          <Text style={styles.subjectText}>🌿 {quiz.subject}</Text>
+          <Text style={styles.subjectText}>💼 {quiz.subject}</Text>
         </View>
         <View
           style={[

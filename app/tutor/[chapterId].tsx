@@ -22,12 +22,12 @@ import {
   ChatMessage,
   TopicContext,
 } from '@/services/ai';
-import { environmentalScienceSubject, Module, Topic } from '@/constants/chapters';
+import { businessModelSubject, Module, Topic } from '@/constants/chapters';
 import { Ionicons } from '@expo/vector-icons';
 
 function findTopic(topicNumber?: string): { topic: Topic; moduleTitle: string } {
   if (topicNumber) {
-    for (const mod of environmentalScienceSubject.modules) {
+    for (const mod of businessModelSubject.modules) {
       const found = mod.topics.find((t: Topic) => t.topicNumber === topicNumber);
       if (found) {
         return { topic: found, moduleTitle: mod.title };
@@ -36,10 +36,10 @@ function findTopic(topicNumber?: string): { topic: Topic; moduleTitle: string } 
   }
   return {
     topic:
-      environmentalScienceSubject.modules[0]?.topics[0] ||
-      environmentalScienceSubject.modules[1]?.topics[0],
+      businessModelSubject.modules[0]?.topics[0] ||
+      businessModelSubject.modules[1]?.topics[0],
     moduleTitle:
-      environmentalScienceSubject.modules[0]?.title || 'Unit I: The Multidisciplinary Nature of Environmental Studies',
+      businessModelSubject.modules[0]?.title || 'Unit I: Introduction to Entrepreneurship',
   };
 }
 
@@ -63,8 +63,8 @@ export default function AiTutorScreen() {
 
   const [messages, setMessages] = useState<ChatMessage[]>(() => {
     const ctx: TopicContext = {
-      subjectName: 'Environmental Science',
-      courseCode: '2993512',
+      subjectName: 'Business Model Development',
+      courseCode: '2994511',
       moduleName: initialContext.moduleTitle,
       topicNumber: initialContext.topic.topicNumber,
       topicTitle: initialContext.topic.title,
@@ -91,8 +91,8 @@ export default function AiTutorScreen() {
     setShowTopicSelector(false);
 
     const context: TopicContext = {
-      subjectName: 'Environmental Science',
-      courseCode: '2993512',
+      subjectName: 'Business Model Development',
+      courseCode: '2994511',
       moduleName: moduleTitle,
       topicNumber: topic.topicNumber,
       topicTitle: topic.title,
@@ -130,8 +130,8 @@ export default function AiTutorScreen() {
 
     try {
       const context: TopicContext = {
-        subjectName: 'Environmental Science',
-        courseCode: '2993512',
+        subjectName: 'Business Model Development',
+        courseCode: '2994511',
         moduleName: currentModuleName,
         topicNumber: currentTopic.topicNumber,
         topicTitle: currentTopic.title,
@@ -168,8 +168,8 @@ export default function AiTutorScreen() {
     <SafeAreaView style={styles.container} edges={['top']}>
       <Header
         showBack
-        title="Environmental AI Tutor"
-        subtitle="Environmental Science (2993512)"
+        title="Business Model AI Tutor"
+        subtitle="Business Model Development (2994511)"
         rightAction={
           <TouchableOpacity
             style={styles.switchTopicBtn}
@@ -184,7 +184,7 @@ export default function AiTutorScreen() {
       {/* Active Topic Banner */}
       <View style={styles.contextBanner}>
         <View style={styles.contextIconWrap}>
-          <Text style={styles.contextIconText}>🌿</Text>
+          <Text style={styles.contextIconText}>💼</Text>
         </View>
         <View style={{ flex: 1 }}>
           <Text style={styles.contextModuleText} numberOfLines={1}>
@@ -199,9 +199,9 @@ export default function AiTutorScreen() {
       {/* Topic Selector Drawer / Overlay */}
       {showTopicSelector && (
         <View style={styles.topicSelectorBox}>
-          <Text style={styles.selectorHeader}>Select Environmental Science Topic:</Text>
+          <Text style={styles.selectorHeader}>Select Business Model Development Topic:</Text>
           <ScrollView style={{ maxHeight: 240 }}>
-            {environmentalScienceSubject.modules.map((m: Module) => (
+            {businessModelSubject.modules.map((m: Module) => (
               <View key={m.id} style={styles.selectorModuleGroup}>
                 <Text style={styles.selectorModuleTitle}>{m.title}</Text>
                 {m.topics.map((t: Topic) => (
@@ -269,7 +269,7 @@ export default function AiTutorScreen() {
           {isTyping && (
             <View style={styles.typingIndicator}>
               <ActivityIndicator size="small" color={Colors.primary} />
-              <Text style={styles.typingText}>AI Tutor is referencing Environmental Science syllabus notes...</Text>
+              <Text style={styles.typingText}>AI Tutor is referencing 2994511 syllabus notes...</Text>
             </View>
           )}
         </ScrollView>

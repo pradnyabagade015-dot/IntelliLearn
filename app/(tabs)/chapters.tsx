@@ -15,7 +15,14 @@ import { SubjectDetailed, Module } from '@/constants/chapters';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 
-type FilterType = 'All' | 'Unit 1: Nature' | 'Unit 2: Resources' | 'Unit 3: Ecosystems' | 'Unit 4: Biodiversity' | 'Unit 5: Pollution' | 'Unit 6: Social Issues';
+type FilterType =
+  | 'All'
+  | 'Unit I: Entrepreneurship'
+  | 'Unit II: Development'
+  | 'Unit III: Financing'
+  | 'Unit IV: IPR'
+  | 'Unit V: Business Model'
+  | 'Unit VI: Digital Business';
 
 export default function ChaptersScreen() {
   const [subject, setSubject] = useState<SubjectDetailed | null>(null);
@@ -23,7 +30,7 @@ export default function ChaptersScreen() {
   const [selectedFilter, setSelectedFilter] = useState<FilterType>('All');
 
   useEffect(() => {
-    apiService.getDetailedSubject('env-2993512').then(setSubject);
+    apiService.getDetailedSubject('bmd-2994511').then(setSubject);
   }, []);
 
   const getFilteredModules = (): Module[] => {
@@ -31,12 +38,12 @@ export default function ChaptersScreen() {
 
     return subject.modules.filter((m) => {
       // Filter category match
-      if (selectedFilter === 'Unit 1: Nature' && m.moduleNumber !== 1) return false;
-      if (selectedFilter === 'Unit 2: Resources' && m.moduleNumber !== 2) return false;
-      if (selectedFilter === 'Unit 3: Ecosystems' && m.moduleNumber !== 3) return false;
-      if (selectedFilter === 'Unit 4: Biodiversity' && m.moduleNumber !== 4) return false;
-      if (selectedFilter === 'Unit 5: Pollution' && m.moduleNumber !== 5) return false;
-      if (selectedFilter === 'Unit 6: Social Issues' && m.moduleNumber !== 6) return false;
+      if (selectedFilter === 'Unit I: Entrepreneurship' && m.moduleNumber !== 1) return false;
+      if (selectedFilter === 'Unit II: Development' && m.moduleNumber !== 2) return false;
+      if (selectedFilter === 'Unit III: Financing' && m.moduleNumber !== 3) return false;
+      if (selectedFilter === 'Unit IV: IPR' && m.moduleNumber !== 4) return false;
+      if (selectedFilter === 'Unit V: Business Model' && m.moduleNumber !== 5) return false;
+      if (selectedFilter === 'Unit VI: Digital Business' && m.moduleNumber !== 6) return false;
 
       // Search match
       if (searchQuery.trim()) {
@@ -60,8 +67,8 @@ export default function ChaptersScreen() {
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <Header
-        title="Environmental Syllabus"
-        subtitle="Course Code: 2993512 • 6 Official Units • University of Mumbai"
+        title="Business Model Syllabus"
+        subtitle="Course Code: 2994511 • 6 Official Units • University of Mumbai"
       />
 
       <View style={styles.searchSection}>
@@ -69,7 +76,7 @@ export default function ChaptersScreen() {
           <Ionicons name="search-outline" size={18} color={Colors.textSecondary} />
           <TextInput
             style={styles.searchInput}
-            placeholder="Search syllabus topics, ecosystems, pollution..."
+            placeholder="Search syllabus topics, BMC, IPR, funding..."
             placeholderTextColor={Colors.textMuted}
             value={searchQuery}
             onChangeText={setSearchQuery}
@@ -91,12 +98,12 @@ export default function ChaptersScreen() {
           {(
             [
               'All',
-              'Unit 1: Nature',
-              'Unit 2: Resources',
-              'Unit 3: Ecosystems',
-              'Unit 4: Biodiversity',
-              'Unit 5: Pollution',
-              'Unit 6: Social Issues',
+              'Unit I: Entrepreneurship',
+              'Unit II: Development',
+              'Unit III: Financing',
+              'Unit IV: IPR',
+              'Unit V: Business Model',
+              'Unit VI: Digital Business',
             ] as const
           ).map((filter) => (
             <TouchableOpacity
@@ -123,17 +130,17 @@ export default function ChaptersScreen() {
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.syllabusOverviewCard}>
           <View style={styles.overviewHeader}>
-            <Text style={styles.overviewTitle}>🌿 Environmental Science (2993512)</Text>
+            <Text style={styles.overviewTitle}>💼 Business Model Development (2994511)</Text>
             <View style={styles.creditTag}>
               <Text style={styles.creditTagText}>2 Credits</Text>
             </View>
           </View>
           <Text style={styles.overviewDesc}>
-            Official University of Mumbai EXTC Semester IV syllabus covering Multidisciplinary Nature, Natural Resources, Ecosystems, Biodiversity, Environmental Pollution, and Social Issues.
+            Official University of Mumbai EXTC Semester IV syllabus covering Entrepreneurship, MSME & Institutions, Start-up Financing, IPR & Patents, Business Model Canvas, and Digital Business Management.
           </Text>
           <TouchableOpacity
             style={styles.openDetailBtn}
-            onPress={() => router.push('/chapter/env-2993512')}
+            onPress={() => router.push('/chapter/bmd-2994511')}
             activeOpacity={0.8}
           >
             <Text style={styles.openDetailBtnText}>Open Full Topic Notes Explorer</Text>
@@ -167,7 +174,7 @@ export default function ChaptersScreen() {
                   onPress={() =>
                     router.push({
                       pathname: '/chapter/[id]',
-                      params: { id: 'env-2993512', topicNumber: top.topicNumber },
+                      params: { id: 'bmd-2994511', topicNumber: top.topicNumber },
                     })
                   }
                   activeOpacity={0.7}
@@ -181,7 +188,7 @@ export default function ChaptersScreen() {
                     onPress={() =>
                       router.push({
                         pathname: '/tutor/[chapterId]',
-                        params: { chapterId: 'env-2993512', topicNumber: top.topicNumber },
+                        params: { chapterId: 'bmd-2994511', topicNumber: top.topicNumber },
                       })
                     }
                   >
@@ -198,7 +205,7 @@ export default function ChaptersScreen() {
             <Text style={styles.emptyEmoji}>🔍</Text>
             <Text style={styles.emptyTitle}>No topics matched your search</Text>
             <Text style={styles.emptyDesc}>
-              {'Try searching with terms like "Ecosystem", "Biodiversity", "Global warming", "Ozone", or "EPA".'}
+              {'Try searching with terms like "Patent", "Angel", "Canvas", "MSME", or "Digital".'}
             </Text>
           </View>
         )}
@@ -375,7 +382,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 10,
     borderBottomWidth: 1,
-    borderBottomColor: '#F1F8F3',
+    borderBottomColor: '#F1F5F9',
     gap: 10,
   },
   topicNum: {

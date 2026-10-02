@@ -28,7 +28,7 @@ export function ChapterCard({ subject, onPress }: ChapterCardProps) {
     >
       <View style={styles.headerRow}>
         <View style={styles.iconContainer}>
-          <Text style={styles.iconText}>{subject.icon || '🌿'}</Text>
+          <Text style={styles.iconText}>{subject.icon || '💼'}</Text>
         </View>
         <View style={styles.badgeRow}>
           <View style={styles.creditBadge}>
@@ -63,7 +63,7 @@ export function ChapterCard({ subject, onPress }: ChapterCardProps) {
 
       {subject.nextTopic && (
         <View style={styles.nextTopicRow}>
-          <Ionicons name="leaf-outline" size={14} color={Colors.primary} />
+          <Ionicons name="rocket-outline" size={14} color={Colors.primary} />
           <Text style={styles.nextTopicText} numberOfLines={1}>
             Up next: {subject.nextTopic}
           </Text>

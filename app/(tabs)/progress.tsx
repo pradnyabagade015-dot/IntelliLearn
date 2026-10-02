@@ -21,14 +21,14 @@ export default function ProgressScreen() {
   useEffect(() => {
     apiService.getProgressSummary().then(setProgress);
     apiService.getStudentProfile().then(setStudent);
-    apiService.getDetailedSubject('env-2993512').then(setDetailedSub);
+    apiService.getDetailedSubject('bmd-2994511').then(setDetailedSub);
   }, []);
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <Header
         title="Learning Analytics"
-        subtitle="Environmental Science • Semester IV EXTC Tracking"
+        subtitle="Business Model Development • Semester IV EXTC Tracking"
       />
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
@@ -37,14 +37,14 @@ export default function ProgressScreen() {
           <View style={styles.mainTopRow}>
             <View>
               <Text style={styles.mainTitle}>Syllabus Completion</Text>
-              <Text style={styles.mainSubtitle}>Course Code: 2993512 • 6 Units</Text>
+              <Text style={styles.mainSubtitle}>Course Code: 2994511 • 6 Units</Text>
             </View>
             <View style={styles.mainPercentBadge}>
-              <Text style={styles.mainPercentText}>{progress?.overallPercentage || 65}%</Text>
+              <Text style={styles.mainPercentText}>{progress?.overallPercentage || 68}%</Text>
             </View>
           </View>
           <ProgressBar
-            progress={progress?.overallPercentage || 65}
+            progress={progress?.overallPercentage || 68}
             color={Colors.primary}
             height={10}
           />
@@ -52,17 +52,17 @@ export default function ProgressScreen() {
           <View style={styles.overviewGrid}>
             <View style={styles.gridItem}>
               <Ionicons name="time" size={18} color={Colors.primary} />
-              <Text style={styles.gridVal}>{progress?.weeklyCompletedHours || 18.5} hrs</Text>
+              <Text style={styles.gridVal}>{progress?.weeklyCompletedHours || 19.5} hrs</Text>
               <Text style={styles.gridLbl}>Study Time</Text>
             </View>
             <View style={styles.gridItem}>
-              <Ionicons name="leaf" size={18} color={Colors.primary} />
-              <Text style={styles.gridVal}>{progress?.streakCount || 6} Days</Text>
-              <Text style={styles.gridLbl}>Eco Streak</Text>
+              <Ionicons name="flash" size={18} color={Colors.primary} />
+              <Text style={styles.gridVal}>{progress?.streakCount || 7} Days</Text>
+              <Text style={styles.gridLbl}>Study Streak</Text>
             </View>
             <View style={styles.gridItem}>
               <Ionicons name="checkmark-done-circle" size={18} color={Colors.secondary} />
-              <Text style={styles.gridVal}>{progress?.accuracyRate || 92}%</Text>
+              <Text style={styles.gridVal}>{progress?.accuracyRate || 94}%</Text>
               <Text style={styles.gridLbl}>Quiz Accuracy</Text>
             </View>
           </View>
@@ -72,7 +72,7 @@ export default function ProgressScreen() {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Unit-Wise Syllabus Progress</Text>
           {detailedSub?.modules.map((m, idx) => {
-            const modProgress = m.isCompleted ? 100 : idx === 4 ? 60 : 20;
+            const modProgress = m.isCompleted ? 100 : idx === 4 ? 60 : 25;
             return (
               <View key={m.id} style={styles.moduleRow}>
                 <View style={styles.moduleRowHeader}>
@@ -93,16 +93,16 @@ export default function ProgressScreen() {
           <View style={styles.goalHeader}>
             <Text style={styles.goalTitle}>Weekly Study Goal</Text>
             <Text style={styles.goalValue}>
-              {student?.studyHoursThisWeek || 18.5} / 20 hrs
+              {student?.studyHoursThisWeek || 19.5} / 20 hrs
             </Text>
           </View>
           <ProgressBar
-            progress={((student?.studyHoursThisWeek || 18.5) / 20) * 100}
+            progress={((student?.studyHoursThisWeek || 19.5) / 20) * 100}
             color={Colors.primary}
             height={8}
           />
           <Text style={styles.goalTip}>
-            {"🌿 Great progress! Just 1.5 more hours to complete this week's target."}
+            {"🚀 Great momentum! Just 0.5 more hours to hit your weekly target."}
           </Text>
         </View>
       </ScrollView>

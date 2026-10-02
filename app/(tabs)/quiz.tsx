@@ -25,8 +25,8 @@ export default function QuizHubScreen() {
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <Header
-        title="Environmental Quizzes"
-        subtitle="Practice University Exam questions on Ecosystems, Biodiversity, Pollution & EPA"
+        title="Business Model Quizzes"
+        subtitle="Practice University Exam questions on Entrepreneurship, IPR, BMC & Digital Business"
       />
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
@@ -37,8 +37,8 @@ export default function QuizHubScreen() {
               <Ionicons name="trophy" size={20} color="#D97706" />
             </View>
             <View>
-              <Text style={styles.statVal}>{student?.totalXp || 1850} XP</Text>
-              <Text style={styles.statLbl}>Environmental XP Earned</Text>
+              <Text style={styles.statVal}>{student?.totalXp || 1950} XP</Text>
+              <Text style={styles.statLbl}>Business Model XP</Text>
             </View>
           </View>
 
@@ -49,7 +49,7 @@ export default function QuizHubScreen() {
               <Ionicons name="checkmark-circle" size={20} color={Colors.primary} />
             </View>
             <View>
-              <Text style={styles.statVal}>{student?.quizzesTaken || 18}</Text>
+              <Text style={styles.statVal}>{student?.quizzesTaken || 19}</Text>
               <Text style={styles.statLbl}>Quizzes Solved</Text>
             </View>
           </View>
@@ -57,7 +57,7 @@ export default function QuizHubScreen() {
 
         {/* Available Quizzes */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Environmental Science Quizzes</Text>
+          <Text style={styles.sectionTitle}>Business Model Development Quizzes</Text>
           {quizzes.map((q) => (
             <QuizCard key={q.id} quiz={q} />
           ))}
@@ -65,11 +65,11 @@ export default function QuizHubScreen() {
 
         {/* Study Tip Card */}
         <View style={styles.tipCard}>
-          <Ionicons name="leaf" size={24} color={Colors.primary} />
+          <Ionicons name="bulb" size={24} color={Colors.primary} />
           <View style={{ flex: 1 }}>
             <Text style={styles.tipTitle}>University Exam Preparation Tip</Text>
             <Text style={styles.tipDesc}>
-              In Mumbai University exams for Environmental Science (2993512), writing structured points with flowcharts (e.g. food web energy flow, rainwater harvesting systems, EPA provisions) fetches maximum marks!
+              In Mumbai University exams for Business Model Development (2994511), drawing structured diagrams like the 9-block Business Model Canvas, Seed-to-IPO funding lifecycle, and statutory patent filing steps fetches maximum marks!
             </Text>
           </View>
         </View>

@@ -47,11 +47,11 @@ export function Header({
         ) : (
           <View style={styles.brandRow}>
             <View style={styles.logoBadge}>
-              <Text style={styles.logoBadgeEmoji}>🌿</Text>
+              <Text style={styles.logoBadgeEmoji}>💼</Text>
             </View>
             <View>
               <Text style={styles.brandTitle}>IntelliLearn</Text>
-              <Text style={styles.brandSub}>Environmental Science • EXTC</Text>
+              <Text style={styles.brandSub}>Business Model Dev • EXTC</Text>
             </View>
           </View>
         )}
@@ -61,7 +61,7 @@ export function Header({
             rightAction
           ) : (
             <View style={styles.streakBadge}>
-              <Text style={styles.streakEmoji}>🌱</Text>
+              <Text style={styles.streakEmoji}>⚡</Text>
               <Text style={styles.streakText}>{streakDays}d Streak</Text>
             </View>
           )}
@@ -79,7 +79,7 @@ export function Header({
             Welcome back, <Text style={styles.nameHighlight}>{studentName}</Text> 👋
           </Text>
           <Text style={styles.semesterTag}>
-            Environmental Science (2993512) • EXTC Semester IV
+            Business Model Development (2994511) • EXTC Semester IV
           </Text>
         </View>
       )}

@@ -28,7 +28,7 @@ export default function QuizPlayerScreen() {
   const [showReview, setShowReview] = useState(false);
 
   useEffect(() => {
-    apiService.getQuizByChapterId(chapterId || 'env-2993512').then((q) => {
+    apiService.getQuizByChapterId(chapterId || 'bmd-2994511').then((q) => {
       if (q) {
         setQuiz(q);
         setUserAnswers(new Array(q.questions.length).fill(null));
@@ -39,9 +39,9 @@ export default function QuizPlayerScreen() {
   if (!quiz || quiz.questions.length === 0) {
     return (
       <SafeAreaView style={styles.container}>
-        <Header showBack title="Environmental Quiz" />
+        <Header showBack title="Business Model Quiz" />
         <View style={styles.loadingBox}>
-          <Text style={styles.loadingText}>Loading Environmental Science quiz...</Text>
+          <Text style={styles.loadingText}>Loading Business Model Development quiz...</Text>
         </View>
       </SafeAreaView>
     );
@@ -76,7 +76,7 @@ export default function QuizPlayerScreen() {
       // Finish Quiz
       const finalScore = score + (selectedOption === currentQ.correctAnswer ? 0 : 0);
       const res = await apiService.submitQuizResult(
-        chapterId || 'env-2993512',
+        chapterId || 'bmd-2994511',
         finalScore,
         quiz.questions.length
       );
@@ -108,17 +108,17 @@ export default function QuizPlayerScreen() {
         <ScrollView contentContainerStyle={styles.resultScrollContent}>
           <View style={styles.resultCard}>
             <Text style={styles.resultEmoji}>
-              {percentage >= 80 ? '🌱' : percentage >= 50 ? '🌿' : '📚'}
+              {percentage >= 80 ? '🏆' : percentage >= 50 ? '💼' : '📚'}
             </Text>
             <Text style={styles.resultTitle}>
               {percentage >= 80
                 ? 'Outstanding Mastery!'
                 : percentage >= 50
-                ? 'Good Environmental Knowledge!'
-                : 'Keep Practicing Environmental Science!'}
+                ? 'Good Business Model Knowledge!'
+                : 'Keep Practicing Business Model Development!'}
             </Text>
             <Text style={styles.resultSubtitle}>
-              Course Code: 2993512 • Environmental Science
+              Course Code: 2994511 • Business Model Development
             </Text>
 
             <View style={styles.scoreCircle}>
@@ -181,7 +181,7 @@ export default function QuizPlayerScreen() {
             {/* Ask AI Tutor CTA */}
             <TouchableOpacity
               style={styles.askAiTutorCta}
-              onPress={() => router.push('/tutor/env-2993512')}
+              onPress={() => router.push('/tutor/bmd-2994511')}
               activeOpacity={0.85}
             >
               <Ionicons name="sparkles" size={18} color="#FFFFFF" />
@@ -286,7 +286,7 @@ export default function QuizPlayerScreen() {
     <SafeAreaView style={styles.container} edges={['top']}>
       <Header
         showBack
-        title="Environmental Quiz"
+        title="Business Model Quiz"
         subtitle={quiz.chapterTitle}
         rightAction={
           <View style={styles.questionCounterBadge}>

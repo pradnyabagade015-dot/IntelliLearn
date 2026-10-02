@@ -17,28 +17,28 @@ import { Ionicons } from '@expo/vector-icons';
 
 const SAMPLE_DOUBTS = [
   {
-    category: '🌡️ Global Warming',
-    query: 'What is global warming and greenhouse effect? Explain the role of carbon dioxide and methane.',
+    category: '💰 Start-up Financing',
+    query: 'What is the difference between an Angel Investor and a Venture Capitalist?',
   },
   {
-    category: '🌿 Biodiversity',
-    query: 'What is biodiversity? Explain genetic, species, and ecosystem diversity with examples.',
+    category: '⚖️ IPR & Patents',
+    query: 'Explain the 3 statutory patentability criteria under Indian Patent Law.',
   },
   {
-    category: '🌧️ Rainwater Harvesting',
-    query: 'What is rainwater harvesting and watershed management? Explain roof-top rainwater harvesting methods.',
+    category: '🚀 Lean Startup & MVP',
+    query: 'What is a Minimum Viable Product (MVP) and how does it prevent startup failure?',
   },
   {
-    category: '⚗️ Acid Rain',
-    query: 'What is Acid Rain? Write the chemical reactions of SO2 and NOx and its impact on monuments.',
+    category: '📊 Business Model Canvas',
+    query: 'Explain the 9 building blocks of Alexander Osterwalder’s Business Model Canvas.',
   },
   {
-    category: '🛡️ Ozone Depletion',
-    query: 'What is ozone layer depletion? Explain the catalytic ozone destruction mechanism by CFCs.',
+    category: '📈 Unit Economics & BEP',
+    query: 'What is Break-Even Point (BEP) in startup unit economics and how is it calculated?',
   },
   {
-    category: '⚖️ Environmental Laws',
-    query: 'What is the Environment Protection Act 1986 (EPA) and powers of the Central Government under it?',
+    category: '🏭 MSME & Institutions',
+    query: 'What is the revised 2020 MSME classification criteria and role of SIDBI/NABARD?',
   },
 ];
 
@@ -55,13 +55,13 @@ export default function DoubtSolverScreen() {
     setIsLoading(true);
     setSolution(null);
     try {
-      const sol = await solveDoubt(queryToSolve, undefined, 'Environmental Science');
+      const sol = await solveDoubt(queryToSolve, undefined, 'Business Model Development');
       setSolution(sol);
       setRecentDoubts((prev) => [
         {
           id: `d-${Date.now()}`,
           question: queryToSolve.trim(),
-          subject: 'Environmental Science (2993512)',
+          subject: 'Business Model Development (2994511)',
           status: 'Resolved',
           timeAgo: 'Just now',
         },
@@ -84,14 +84,14 @@ export default function DoubtSolverScreen() {
       <Header
         showBack
         title="AI Doubt Solver"
-        subtitle="Direct answers, explanations & exam points for Environmental Science"
+        subtitle="Direct answers, explanations & exam points for Business Model Development"
       />
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {/* Input Card */}
         <View style={styles.card}>
           <View style={styles.cardHeaderRow}>
-            <Text style={styles.cardLabel}>Ask Your Environmental Science Doubt:</Text>
+            <Text style={styles.cardLabel}>Ask Your Business Model Doubt:</Text>
             {question ? (
               <TouchableOpacity onPress={() => setQuestion('')}>
                 <Text style={styles.clearText}>Clear</Text>
@@ -101,7 +101,7 @@ export default function DoubtSolverScreen() {
 
           <TextInput
             style={styles.textArea}
-            placeholder="Type your question (e.g. What is global warming? What is biodiversity? What is acid rain?)..."
+            placeholder="Type your question (e.g. Difference between Angel and VC? How to draw BMC? What is Section 3 in Patents Act?)..."
             placeholderTextColor={Colors.textMuted}
             value={question}
             onChangeText={setQuestion}
@@ -113,7 +113,7 @@ export default function DoubtSolverScreen() {
             <TouchableOpacity
               style={styles.scanBtn}
               onPress={() => {
-                const sample = 'What is the Environment Protection Act 1986 and what are its objectives?';
+                const sample = 'What is the statutory patentability criteria under Indian Patent Law?';
                 setQuestion(sample);
                 handleSolve(sample);
               }}
@@ -152,7 +152,7 @@ export default function DoubtSolverScreen() {
                 <Ionicons name="checkmark-circle" size={18} color={Colors.primary} />
                 <Text style={styles.solutionBadgeText}>Verified Syllabus Solution</Text>
               </View>
-              <Text style={styles.solutionCode}>Course Code: 2993512</Text>
+              <Text style={styles.solutionCode}>Course Code: 2994511</Text>
             </View>
             <Text style={styles.solutionText}>{solution}</Text>
           </View>

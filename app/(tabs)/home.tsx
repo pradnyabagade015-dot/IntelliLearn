@@ -59,7 +59,7 @@ export default function HomeScreen() {
     <SafeAreaView style={styles.container} edges={['top']}>
       <Header
         studentName={student?.name || 'Alex'}
-        streakDays={student?.streakDays || 6}
+        streakDays={student?.streakDays || 7}
       />
 
       <ScrollView
@@ -76,18 +76,18 @@ export default function HomeScreen() {
         <View style={styles.heroCard}>
           <View style={styles.heroHeader}>
             <View style={styles.heroBadge}>
-              <Text style={styles.heroBadgeText}>🌿 Course Code: 2993512 • 2 Credits</Text>
+              <Text style={styles.heroBadgeText}>💼 Course Code: 2994511 • 2 Credits</Text>
             </View>
             <View style={styles.progressPercentPill}>
               <Text style={styles.progressPercentPillText}>
-                {student?.semesterProgress || 65}% Done
+                {student?.semesterProgress || 68}% Done
               </Text>
             </View>
           </View>
 
-          <Text style={styles.heroMainTitle}>Environmental Science</Text>
+          <Text style={styles.heroMainTitle}>Business Model Development</Text>
           <Text style={styles.heroSubtitle}>
-            AI-powered learning for EXTC students
+            AI-powered learning for EXTC Semester IV students
           </Text>
 
           <View style={styles.progressContainer}>
@@ -96,7 +96,7 @@ export default function HomeScreen() {
               <Text style={styles.progressSubValue}>4 of 6 Units</Text>
             </View>
             <ProgressBar
-              progress={student?.semesterProgress || 65}
+              progress={student?.semesterProgress || 68}
               color={Colors.primary}
               height={8}
             />
@@ -104,17 +104,17 @@ export default function HomeScreen() {
 
           <View style={styles.heroStatsGrid}>
             <View style={styles.heroStatItem}>
-              <Text style={styles.heroStatVal}>{student?.studyHoursThisWeek || 18.5}h</Text>
+              <Text style={styles.heroStatVal}>{student?.studyHoursThisWeek || 19.5}h</Text>
               <Text style={styles.heroStatLbl}>Study This Week</Text>
             </View>
             <View style={styles.heroStatDivider} />
             <View style={styles.heroStatItem}>
-              <Text style={styles.heroStatVal}>{student?.doubtsResolved || 34}</Text>
+              <Text style={styles.heroStatVal}>{student?.doubtsResolved || 38}</Text>
               <Text style={styles.heroStatLbl}>Doubts Solved</Text>
             </View>
             <View style={styles.heroStatDivider} />
             <View style={styles.heroStatItem}>
-              <Text style={styles.heroStatVal}>{student?.totalXp || 1850}</Text>
+              <Text style={styles.heroStatVal}>{student?.totalXp || 1950}</Text>
               <Text style={styles.heroStatLbl}>Total XP</Text>
             </View>
           </View>
@@ -125,7 +125,7 @@ export default function HomeScreen() {
           {/* AI Tutor Card */}
           <TouchableOpacity
             style={[styles.actionBanner, { backgroundColor: Colors.primaryLight, borderColor: Colors.cardBorder }]}
-            onPress={() => router.push('/tutor/env-2993512')}
+            onPress={() => router.push('/tutor/bmd-2994511')}
             activeOpacity={0.8}
           >
             <View style={styles.actionHeader}>
@@ -138,7 +138,7 @@ export default function HomeScreen() {
             </View>
             <Text style={styles.actionTitle}>AI Study Tutor</Text>
             <Text style={styles.actionDesc}>
-              5-mark model answers, ecosystem dynamics, EPA 1986 & quick revisions.
+              5-mark model answers, BMC canvas, IPR patents & quick revisions.
             </Text>
             <View style={styles.actionLinkRow}>
               <Text style={[styles.actionLinkText, { color: Colors.primaryDark }]}>
@@ -150,7 +150,7 @@ export default function HomeScreen() {
 
           {/* AI Doubt Solver Card */}
           <TouchableOpacity
-            style={[styles.actionBanner, { backgroundColor: Colors.secondaryLight, borderColor: '#A7F3D0' }]}
+            style={[styles.actionBanner, { backgroundColor: Colors.secondaryLight, borderColor: '#C7D2FE' }]}
             onPress={() => router.push('/doubt')}
             activeOpacity={0.8}
           >
@@ -158,13 +158,13 @@ export default function HomeScreen() {
               <View style={[styles.actionIcon, { backgroundColor: Colors.secondary }]}>
                 <Ionicons name="bulb" size={18} color="#FFFFFF" />
               </View>
-              <View style={[styles.actionLiveTag, { backgroundColor: '#CCFBF1' }]}>
+              <View style={[styles.actionLiveTag, { backgroundColor: '#E0E7FF' }]}>
                 <Text style={[styles.actionLiveText, { color: Colors.secondaryDark }]}>SOLVER</Text>
               </View>
             </View>
             <Text style={styles.actionTitle}>Doubt Solver</Text>
             <Text style={styles.actionDesc}>
-              Instant answers for Global warming, Acid rain, Ozone depletion & EPA.
+              Instant answers for Angel vs VC, Patents Act 1970, MVP & unit economics.
             </Text>
             <View style={styles.actionLinkRow}>
               <Text style={[styles.actionLinkText, { color: Colors.secondaryDark }]}>
@@ -175,7 +175,7 @@ export default function HomeScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* Daily Environmental Challenge */}
+        {/* Daily Business Model Challenge */}
         {dailyQuiz && (
           <View style={styles.section}>
             <View style={styles.sectionHeader}>

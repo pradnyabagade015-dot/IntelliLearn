@@ -56,11 +56,11 @@ export default function LoginScreen() {
 
           <View style={styles.headerSection}>
             <View style={styles.iconCircle}>
-              <Text style={styles.iconText}>🌿</Text>
+              <Text style={styles.iconText}>💼</Text>
             </View>
             <Text style={styles.title}>Student Login</Text>
             <Text style={styles.subtitle}>
-              Log in to access Environmental Studies course notes & AI Tutor
+              Log in to access Business Model Development course notes & AI Tutor
             </Text>
           </View>
 

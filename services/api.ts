@@ -1,6 +1,6 @@
 import {
   mockSubjects,
-  environmentalScienceSubject,
+  businessModelSubject,
   mockChapterQuizzes,
   mockDailyQuiz,
   mockDoubtSolver,
@@ -28,12 +28,12 @@ export const apiService = {
 
   async getDetailedSubject(_id?: string): Promise<SubjectDetailed> {
     await new Promise((r) => setTimeout(r, 40));
-    return environmentalScienceSubject;
+    return businessModelSubject;
   },
 
   async getQuizByChapterId(chapterId: string): Promise<ChapterQuiz | undefined> {
     await new Promise((r) => setTimeout(r, 80));
-    return mockChapterQuizzes[chapterId] || mockChapterQuizzes['env-2993512'] || mockChapterQuizzes['daily-env-quiz'];
+    return mockChapterQuizzes[chapterId] || mockChapterQuizzes['bmd-2994511'] || mockChapterQuizzes['daily-bmd-quiz'];
   },
 
   async getAllQuizzes(): Promise<DailyQuiz[]> {
@@ -41,26 +41,37 @@ export const apiService = {
     return [
       mockDailyQuiz,
       {
-        id: 'quiz-env-unit3',
-        title: 'Ecosystems & Biodiversity Conservation Quiz',
-        subject: 'Environmental Science',
-        subjectCode: '2993512',
+        id: 'quiz-bmd-unit3',
+        title: 'Start-up Financing & Unit Economics Quiz',
+        subject: 'Business Model Development',
+        subjectCode: '2994511',
         questionCount: 5,
         durationMinutes: 8,
         xpReward: 80,
         difficulty: 'Medium',
-        topics: ['Food Chains & Energy Flow', 'Genetic & Species Diversity', 'Biodiversity Hotspots'],
+        topics: ['Sources of Funding', 'Debt vs Equity', 'Angel Investors & VCs', 'Break-Even Analysis'],
       },
       {
-        id: 'quiz-env-unit6',
-        title: 'Social Issues, Climate Change & EPA 1986',
-        subject: 'Environmental Science',
-        subjectCode: '2993512',
+        id: 'quiz-bmd-unit4',
+        title: 'IPR, Patents & Trademark Law Quiz',
+        subject: 'Business Model Development',
+        subjectCode: '2994511',
         questionCount: 5,
         durationMinutes: 7,
         xpReward: 90,
         difficulty: 'Hard',
-        topics: ['Rainwater Harvesting', 'Global Warming & GHG', 'Acid Rain & Ozone', 'EPA 1986'],
+        topics: ['Patents Act 1970', 'Section 3 Non-Patentability', 'Copyrights & Trademarks', 'Trade Secrets'],
+      },
+      {
+        id: 'quiz-bmd-unit5',
+        title: 'Business Model Canvas & Lean Startup Quiz',
+        subject: 'Business Model Development',
+        subjectCode: '2994511',
+        questionCount: 5,
+        durationMinutes: 8,
+        xpReward: 85,
+        difficulty: 'Medium',
+        topics: ['9 Building Blocks', 'MVP & Prototyping', 'Freemium & SaaS Models', 'Investor Pitching'],
       },
     ];
   },

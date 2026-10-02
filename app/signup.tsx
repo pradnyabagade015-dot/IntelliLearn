@@ -65,11 +65,11 @@ export default function SignupScreen() {
 
           <View style={styles.headerSection}>
             <View style={styles.iconCircle}>
-              <Text style={styles.iconText}>🌱</Text>
+              <Text style={styles.iconText}>💼</Text>
             </View>
             <Text style={styles.title}>Create Account</Text>
             <Text style={styles.subtitle}>
-              Join IntelliLearn for EXTC Environmental Studies & Engineering
+              Join IntelliLearn for EXTC Business Model Development & Entrepreneurship
             </Text>
           </View>
 
