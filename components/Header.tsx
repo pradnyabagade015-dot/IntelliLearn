@@ -79,7 +79,7 @@ export function Header({
             Welcome back, <Text style={styles.nameHighlight}>{studentName}</Text> 👋
           </Text>
           <Text style={styles.semesterTag}>
-            Business Model Development (2994511) • EXTC Semester IV
+            EXTC Semester IV • Microcontrollers & Business Model
           </Text>
         </View>
       )}

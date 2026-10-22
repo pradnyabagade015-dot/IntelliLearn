@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -9,203 +9,324 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Colors } from '@/constants/colors';
-import { Header } from '@/components/Header';
 import { apiService } from '@/services/api';
 import { SubjectDetailed, Module } from '@/constants/chapters';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { progressService, SubjectMetrics } from '@/services/progress';
 
-type FilterType =
-  | 'All'
-  | 'Unit I: Entrepreneurship'
-  | 'Unit II: Development'
-  | 'Unit III: Financing'
-  | 'Unit IV: IPR'
-  | 'Unit V: Business Model'
-  | 'Unit VI: Digital Business';
+// Official clean titles for BMD Units
+const BMD_UNIT_NAMES: Record<number, string> = {
+  1: 'Introduction to Entrepreneurship',
+  2: 'Entrepreneurship Development',
+  3: 'Start-up Financing',
+  4: 'Intellectual Property Rights',
+  5: 'Business Model Development',
+  6: 'Digital Business Management',
+};
 
 export default function ChaptersScreen() {
+  const [selectedSubjectId, setSelectedSubjectId] = useState<string>('micro-2304112');
   const [subject, setSubject] = useState<SubjectDetailed | null>(null);
+  const [metrics, setMetrics] = useState<SubjectMetrics | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedFilter, setSelectedFilter] = useState<FilterType>('All');
+  const [expandedUnit, setExpandedUnit] = useState<number | null>(null);
+
+  const loadData = useCallback(async () => {
+    try {
+      const [sub, m] = await Promise.all([
+        apiService.getDetailedSubject(selectedSubjectId),
+        progressService.getSubjectMetrics(selectedSubjectId),
+      ]);
+      setSubject(sub);
+      setMetrics(m);
+    } catch {
+      // Ignore
+    }
+  }, [selectedSubjectId]);
 
   useEffect(() => {
-    apiService.getDetailedSubject('bmd-2994511').then(setSubject);
-  }, []);
-
-  const getFilteredModules = (): Module[] => {
-    if (!subject) return [];
-
-    return subject.modules.filter((m) => {
-      // Filter category match
-      if (selectedFilter === 'Unit I: Entrepreneurship' && m.moduleNumber !== 1) return false;
-      if (selectedFilter === 'Unit II: Development' && m.moduleNumber !== 2) return false;
-      if (selectedFilter === 'Unit III: Financing' && m.moduleNumber !== 3) return false;
-      if (selectedFilter === 'Unit IV: IPR' && m.moduleNumber !== 4) return false;
-      if (selectedFilter === 'Unit V: Business Model' && m.moduleNumber !== 5) return false;
-      if (selectedFilter === 'Unit VI: Digital Business' && m.moduleNumber !== 6) return false;
-
-      // Search match
-      if (searchQuery.trim()) {
-        const query = searchQuery.toLowerCase();
-        const moduleMatch = m.title.toLowerCase().includes(query);
-        const topicMatch = m.topics.some(
-          (t) =>
-            t.title.toLowerCase().includes(query) ||
-            t.topicNumber.toLowerCase().includes(query) ||
-            t.notes.simpleDefinition.toLowerCase().includes(query)
-        );
-        return moduleMatch || topicMatch;
+    let isMounted = true;
+    Promise.all([
+      apiService.getDetailedSubject(selectedSubjectId),
+      progressService.getSubjectMetrics(selectedSubjectId),
+    ]).then(([sub, m]) => {
+      if (isMounted) {
+        setSubject(sub);
+        setMetrics(m);
       }
+    });
 
-      return true;
+    const unsub = progressService.subscribe(() => {
+      if (isMounted) {
+        loadData();
+      }
+    });
+
+    return () => {
+      isMounted = false;
+      unsub();
+    };
+  }, [selectedSubjectId, loadData]);
+
+  useFocusEffect(
+    useCallback(() => {
+      loadData();
+    }, [loadData])
+  );
+
+  const modules = subject?.modules || [];
+
+  const getCleanUnitTitle = (m: Module) => {
+    if (selectedSubjectId === 'bmd-2994511' && BMD_UNIT_NAMES[m.moduleNumber]) {
+      return BMD_UNIT_NAMES[m.moduleNumber];
+    }
+    return m.title.replace(/^Unit\s+[IVXLCDM]+\s*[–-]\s*/i, '');
+  };
+
+  const filteredModules = modules.filter((m) => {
+    if (!searchQuery.trim()) return true;
+    const q = searchQuery.toLowerCase();
+    const cleanTitle = getCleanUnitTitle(m).toLowerCase();
+    const matchUnit = cleanTitle.includes(q) || `unit ${m.moduleNumber}`.includes(q);
+    const matchTopics = m.topics.some((t) => t.title.toLowerCase().includes(q));
+    return matchUnit || matchTopics;
+  });
+
+  const handleOpenUnit = (mod: Module) => {
+    const firstTopicNumber = mod.topics[0]?.topicNumber;
+    router.push({
+      pathname: '/chapter/[id]',
+      params: { id: selectedSubjectId, topicNumber: firstTopicNumber },
     });
   };
 
-  const filteredModules = getFilteredModules();
+  const handleOpenTopic = (topicNumber: string) => {
+    router.push({
+      pathname: '/chapter/[id]',
+      params: { id: selectedSubjectId, topicNumber },
+    });
+  };
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
-      <Header
-        title="Business Model Syllabus"
-        subtitle="Course Code: 2994511 • 6 Official Units • University of Mumbai"
-      />
-
-      <View style={styles.searchSection}>
-        <View style={styles.searchBar}>
-          <Ionicons name="search-outline" size={18} color={Colors.textSecondary} />
-          <TextInput
-            style={styles.searchInput}
-            placeholder="Search syllabus topics, BMC, IPR, funding..."
-            placeholderTextColor={Colors.textMuted}
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-            clearButtonMode="while-editing"
-          />
-          {searchQuery ? (
-            <TouchableOpacity onPress={() => setSearchQuery('')}>
-              <Ionicons name="close-circle" size={18} color={Colors.textMuted} />
-            </TouchableOpacity>
-          ) : null}
+      {/* Screen Header */}
+      <View style={styles.header}>
+        <View>
+          <Text style={styles.headerTitle}>Syllabus Chapters</Text>
+          <Text style={styles.headerSubtitle}>
+            {subject?.name || 'Syllabus'} • Course Code: {subject?.code || '2304112'}
+          </Text>
         </View>
 
-        {/* Filter Pills */}
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.filterRow}
-        >
-          {(
-            [
-              'All',
-              'Unit I: Entrepreneurship',
-              'Unit II: Development',
-              'Unit III: Financing',
-              'Unit IV: IPR',
-              'Unit V: Business Model',
-              'Unit VI: Digital Business',
-            ] as const
-          ).map((filter) => (
+        <View style={{ flexDirection: 'row', gap: 6, alignItems: 'center' }}>
+          {selectedSubjectId === 'micro-2304112' && (
             <TouchableOpacity
-              key={filter}
-              style={[
-                styles.filterPill,
-                selectedFilter === filter && styles.activeFilterPill,
-              ]}
-              onPress={() => setSelectedFilter(filter)}
+              style={[styles.allNotesBtn, { backgroundColor: '#E0F2FE', borderColor: '#BAE6FD' }]}
+              onPress={() => router.push('/challenge' as any)}
+              activeOpacity={0.8}
             >
-              <Text
-                style={[
-                  styles.filterText,
-                  selectedFilter === filter && styles.activeFilterText,
-                ]}
-              >
-                {filter}
-              </Text>
+              <Ionicons name="terminal" size={15} color="#0369A1" />
+              <Text style={[styles.allNotesText, { color: '#0369A1' }]}>Challenge</Text>
             </TouchableOpacity>
-          ))}
-        </ScrollView>
-      </View>
+          )}
 
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        <View style={styles.syllabusOverviewCard}>
-          <View style={styles.overviewHeader}>
-            <Text style={styles.overviewTitle}>💼 Business Model Development (2994511)</Text>
-            <View style={styles.creditTag}>
-              <Text style={styles.creditTagText}>2 Credits</Text>
-            </View>
-          </View>
-          <Text style={styles.overviewDesc}>
-            Official University of Mumbai EXTC Semester IV syllabus covering Entrepreneurship, MSME & Institutions, Start-up Financing, IPR & Patents, Business Model Canvas, and Digital Business Management.
-          </Text>
           <TouchableOpacity
-            style={styles.openDetailBtn}
-            onPress={() => router.push('/chapter/bmd-2994511')}
+            style={styles.allNotesBtn}
+            onPress={() =>
+              router.push({
+                pathname: '/chapter/[id]',
+                params: { id: selectedSubjectId },
+              })
+            }
             activeOpacity={0.8}
           >
-            <Text style={styles.openDetailBtnText}>Open Full Topic Notes Explorer</Text>
-            <Ionicons name="arrow-forward" size={16} color="#FFFFFF" />
+            <Ionicons name="book-outline" size={16} color={Colors.primaryDark} />
+            <Text style={styles.allNotesText}>Full Notes</Text>
           </TouchableOpacity>
         </View>
+      </View>
 
-        <Text style={styles.countText}>
-          Showing {filteredModules.length} of {subject?.modules.length || 6} Syllabus Units
+      {/* Subject Filter Pills */}
+      <View style={styles.subjectSelectorRow}>
+        <TouchableOpacity
+          style={[
+            styles.subjectPill,
+            selectedSubjectId === 'micro-2304112' && styles.subjectPillActive,
+          ]}
+          onPress={() => {
+            setSelectedSubjectId('micro-2304112');
+            setExpandedUnit(null);
+          }}
+        >
+          <Text
+            style={[
+              styles.subjectPillText,
+              selectedSubjectId === 'micro-2304112' && styles.subjectPillTextActive,
+            ]}
+          >
+            ⚡ Microcontrollers (2304112)
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[
+            styles.subjectPill,
+            selectedSubjectId === 'bmd-2994511' && styles.subjectPillActive,
+          ]}
+          onPress={() => {
+            setSelectedSubjectId('bmd-2994511');
+            setExpandedUnit(null);
+          }}
+        >
+          <Text
+            style={[
+              styles.subjectPillText,
+              selectedSubjectId === 'bmd-2994511' && styles.subjectPillTextActive,
+            ]}
+          >
+            💼 Business Model (2994511)
+          </Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Search Bar */}
+      <View style={styles.searchContainer}>
+        <Ionicons name="search-outline" size={18} color={Colors.textSecondary} />
+        <TextInput
+          style={styles.searchInput}
+          placeholder={`Search ${subject?.name || 'syllabus'} topics...`}
+          placeholderTextColor={Colors.textMuted}
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+        />
+        {searchQuery ? (
+          <TouchableOpacity onPress={() => setSearchQuery('')}>
+            <Ionicons name="close-circle" size={18} color={Colors.textMuted} />
+          </TouchableOpacity>
+        ) : null}
+      </View>
+
+      {/* Units List */}
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        <Text style={styles.sectionHeading}>
+          {subject?.name} Units (Semester IV)
         </Text>
 
-        {filteredModules.map((mod) => (
-          <View key={mod.id} style={styles.moduleCard}>
-            <View style={styles.moduleCardHeader}>
-              <View style={styles.modBadge}>
-                <Text style={styles.modBadgeText}>U{mod.moduleNumber}</Text>
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.modTitle}>{mod.title}</Text>
-                <Text style={styles.modMeta}>
-                  {mod.hours} Teaching Hours • {mod.topics.length} Syllabus Topics • {mod.loMapping}
-                </Text>
-              </View>
-            </View>
+        {filteredModules.map((mod) => {
+          const unitNumber = mod.moduleNumber;
+          const cleanTitle = getCleanUnitTitle(mod);
+          const progress = metrics?.unitProgress[unitNumber] ?? 0;
+          const isExpanded = expandedUnit === unitNumber;
 
-            <View style={styles.topicsList}>
-              {mod.topics.map((top) => (
-                <TouchableOpacity
-                  key={top.id}
-                  style={styles.topicRow}
-                  onPress={() =>
-                    router.push({
-                      pathname: '/chapter/[id]',
-                      params: { id: 'bmd-2994511', topicNumber: top.topicNumber },
-                    })
-                  }
-                  activeOpacity={0.7}
-                >
-                  <Text style={styles.topicNum}>{top.topicNumber}</Text>
-                  <Text style={styles.topicTitle} numberOfLines={2}>
-                    {top.title}
+          return (
+            <View key={mod.id} style={styles.unitCard}>
+              {/* Unit Card Header Info */}
+              <View style={styles.cardMain}>
+                <View style={styles.unitTopRow}>
+                  <View style={styles.unitBadge}>
+                    <Text style={styles.unitBadgeText}>Unit {unitNumber}</Text>
+                  </View>
+                  <Text style={styles.topicCountText}>
+                    {mod.topics.length} Topics • {mod.hours}
                   </Text>
+                </View>
+
+                <Text style={styles.unitTitle}>{cleanTitle}</Text>
+
+                {/* Progress Bar & Percentage */}
+                <View style={styles.progressRow}>
+                  <View style={styles.progressBarTrack}>
+                    <View
+                      style={[
+                        styles.progressBarFill,
+                        { width: `${progress}%` },
+                      ]}
+                    />
+                  </View>
+                  <Text style={styles.progressText}>{progress}%</Text>
+                </View>
+
+                {/* Card Action Row: Topics Dropdown + Open Button */}
+                <View style={styles.actionRow}>
                   <TouchableOpacity
-                    style={styles.tutorIconBtn}
-                    onPress={() =>
-                      router.push({
-                        pathname: '/tutor/[chapterId]',
-                        params: { chapterId: 'bmd-2994511', topicNumber: top.topicNumber },
-                      })
-                    }
+                    style={styles.toggleTopicsBtn}
+                    onPress={() => setExpandedUnit(isExpanded ? null : unitNumber)}
+                    activeOpacity={0.7}
                   >
-                    <Ionicons name="sparkles" size={14} color={Colors.primary} />
+                    <Ionicons
+                      name={isExpanded ? 'chevron-up' : 'chevron-down'}
+                      size={16}
+                      color={Colors.textSecondary}
+                    />
+                    <Text style={styles.toggleTopicsText}>
+                      {isExpanded ? 'Hide Topics' : 'View Topics'}
+                    </Text>
                   </TouchableOpacity>
-                </TouchableOpacity>
-              ))}
+
+                  <TouchableOpacity
+                    style={styles.openBtn}
+                    onPress={() => handleOpenUnit(mod)}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={styles.openBtnText}>Open</Text>
+                    <Ionicons name="arrow-forward" size={14} color="#FFFFFF" />
+                  </TouchableOpacity>
+                </View>
+              </View>
+
+              {/* Collapsible Topics Preview */}
+              {isExpanded && (
+                <View style={styles.topicsDropdown}>
+                  {mod.topics.map((topic) => {
+                    const isTopCompleted = metrics?.completedTopicNumbers.includes(topic.topicNumber);
+                    return (
+                      <TouchableOpacity
+                        key={topic.id}
+                        style={styles.topicItemRow}
+                        onPress={() => handleOpenTopic(topic.topicNumber)}
+                        activeOpacity={0.7}
+                      >
+                        <View
+                          style={[
+                            styles.topicIndexBadge,
+                            isTopCompleted && { backgroundColor: '#16A34A' },
+                          ]}
+                        >
+                          {isTopCompleted ? (
+                            <Ionicons name="checkmark" size={11} color="#FFFFFF" />
+                          ) : (
+                            <Text style={styles.topicIndexText}>{topic.topicNumber}</Text>
+                          )}
+                        </View>
+                        <Text
+                          style={[
+                            styles.topicItemTitle,
+                            isTopCompleted && { color: Colors.textSecondary },
+                          ]}
+                          numberOfLines={2}
+                        >
+                          {topic.title}
+                        </Text>
+                        <Ionicons name="chevron-forward" size={14} color={Colors.textMuted} />
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+              )}
             </View>
-          </View>
-        ))}
+          );
+        })}
 
         {filteredModules.length === 0 && (
-          <View style={styles.emptyState}>
+          <View style={styles.emptyContainer}>
             <Text style={styles.emptyEmoji}>🔍</Text>
-            <Text style={styles.emptyTitle}>No topics matched your search</Text>
-            <Text style={styles.emptyDesc}>
-              {'Try searching with terms like "Patent", "Angel", "Canvas", "MSME", or "Digital".'}
+            <Text style={styles.emptyTitle}>No syllabus units found</Text>
+            <Text style={styles.emptySub}>
+              {'Try searching for "Entrepreneurship", "Financing", "IPR", or "Digital".'}
             </Text>
           </View>
         )}
@@ -219,190 +340,245 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.background,
   },
-  searchSection: {
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingTop: 14,
+    paddingBottom: 14,
     backgroundColor: Colors.card,
     borderBottomWidth: 1,
     borderBottomColor: Colors.cardBorder,
-    gap: 10,
   },
-  searchBar: {
+  headerTitle: {
+    fontSize: 22,
+    fontWeight: '900',
+    color: Colors.text,
+    letterSpacing: -0.4,
+  },
+  headerSubtitle: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: Colors.textSecondary,
+    marginTop: 2,
+  },
+  allNotesBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.background,
-    borderRadius: 12,
+    backgroundColor: Colors.primaryLight,
     paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    gap: 4,
     borderWidth: 1,
     borderColor: Colors.cardBorder,
-    height: 42,
-    gap: 8,
+  },
+  allNotesText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: Colors.primaryDark,
+  },
+  subjectSelectorRow: {
+    flexDirection: 'row',
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    gap: 10,
+  },
+  subjectPill: {
+    flex: 1,
+    paddingVertical: 9,
+    paddingHorizontal: 10,
+    borderRadius: 12,
+    backgroundColor: Colors.card,
+    borderWidth: 1.5,
+    borderColor: Colors.cardBorder,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  subjectPillActive: {
+    backgroundColor: Colors.primaryLight,
+    borderColor: Colors.primary,
+  },
+  subjectPillText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: Colors.textSecondary,
+  },
+  subjectPillTextActive: {
+    color: Colors.primaryDark,
+    fontWeight: '800',
+  },
+  searchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.card,
+    marginHorizontal: 18,
+    marginTop: 14,
+    paddingHorizontal: 14,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: Colors.cardBorder,
+    height: 44,
+    gap: 10,
   },
   searchInput: {
     flex: 1,
     fontSize: 14,
     color: Colors.text,
   },
-  filterRow: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  filterPill: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 20,
-    backgroundColor: Colors.background,
-    borderWidth: 1,
-    borderColor: Colors.cardBorder,
-  },
-  activeFilterPill: {
-    backgroundColor: Colors.primary,
-    borderColor: Colors.primary,
-  },
-  filterText: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: Colors.textSecondary,
-  },
-  activeFilterText: {
-    color: '#FFFFFF',
-  },
   scrollContent: {
-    padding: 16,
-    paddingBottom: 32,
-    gap: 12,
+    padding: 18,
+    paddingBottom: 36,
+    gap: 14,
   },
-  syllabusOverviewCard: {
+  sectionHeading: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: Colors.textSecondary,
+    marginBottom: 2,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  unitCard: {
     backgroundColor: Colors.card,
     borderRadius: 18,
-    padding: 16,
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: Colors.cardBorder,
-    gap: 10,
+    overflow: 'hidden',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.04,
+    shadowRadius: 5,
+    elevation: 2,
+  },
+  cardMain: {
+    padding: 18,
+  },
+  unitTopRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  unitBadge: {
+    backgroundColor: Colors.primaryLight,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 8,
+  },
+  unitBadgeText: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: Colors.primaryDark,
+  },
+  topicCountText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: Colors.textSecondary,
+  },
+  unitTitle: {
+    fontSize: 17,
+    fontWeight: '800',
+    color: Colors.text,
+    letterSpacing: -0.3,
+    marginBottom: 12,
+    lineHeight: 22,
+  },
+  progressRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginBottom: 16,
+  },
+  progressBarTrack: {
+    flex: 1,
+    height: 7,
+    backgroundColor: Colors.backgroundAlt,
+    borderRadius: 4,
+    overflow: 'hidden',
+  },
+  progressBarFill: {
+    height: '100%',
+    backgroundColor: Colors.primary,
+    borderRadius: 4,
+  },
+  progressText: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: Colors.primary,
+    width: 38,
+    textAlign: 'right',
+  },
+  actionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderTopWidth: 1,
+    borderTopColor: Colors.backgroundAlt,
+    paddingTop: 12,
+  },
+  toggleTopicsBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingVertical: 4,
+  },
+  toggleTopicsText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: Colors.textSecondary,
+  },
+  openBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.primary,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 10,
+    gap: 6,
+    shadowColor: Colors.primary,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
     shadowRadius: 4,
     elevation: 2,
   },
-  overviewHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  overviewTitle: {
-    fontSize: 16,
-    fontWeight: '800',
-    color: Colors.text,
-  },
-  creditTag: {
-    backgroundColor: Colors.primaryLight,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 6,
-  },
-  creditTagText: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: Colors.primaryDark,
-  },
-  overviewDesc: {
-    fontSize: 12,
-    color: Colors.textSecondary,
-    lineHeight: 18,
-  },
-  openDetailBtn: {
-    backgroundColor: Colors.primary,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 10,
-    borderRadius: 10,
-    gap: 6,
-  },
-  openDetailBtnText: {
+  openBtnText: {
     color: '#FFFFFF',
     fontSize: 13,
-    fontWeight: '700',
+    fontWeight: '800',
   },
-  countText: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: Colors.textSecondary,
-    marginTop: 4,
+  topicsDropdown: {
+    backgroundColor: Colors.background,
+    borderTopWidth: 1,
+    borderTopColor: Colors.cardBorder,
+    paddingVertical: 6,
   },
-  moduleCard: {
-    backgroundColor: Colors.card,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: Colors.cardBorder,
-    overflow: 'hidden',
-  },
-  moduleCardHeader: {
+  topicItemRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 14,
-    gap: 12,
-    backgroundColor: Colors.backgroundAlt,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.cardBorder,
-  },
-  modBadge: {
-    width: 36,
-    height: 36,
-    borderRadius: 10,
-    backgroundColor: Colors.primaryLight,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: Colors.cardBorder,
-  },
-  modBadgeText: {
-    fontSize: 12,
-    fontWeight: '800',
-    color: Colors.primaryDark,
-  },
-  modTitle: {
-    fontSize: 14,
-    fontWeight: '800',
-    color: Colors.text,
-  },
-  modMeta: {
-    fontSize: 11,
-    color: Colors.textSecondary,
-    marginTop: 2,
-    fontWeight: '500',
-  },
-  topicsList: {
-    paddingVertical: 4,
-  },
-  topicRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 14,
+    paddingHorizontal: 16,
     paddingVertical: 10,
     borderBottomWidth: 1,
-    borderBottomColor: '#F1F5F9',
+    borderBottomColor: Colors.cardBorder,
     gap: 10,
   },
-  topicNum: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: Colors.primary,
-    width: 24,
+  topicIndexBadge: {
+    width: 32,
+    alignItems: 'center',
   },
-  topicTitle: {
+  topicIndexText: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: Colors.primary,
+  },
+  topicItemTitle: {
+    flex: 1,
     fontSize: 13,
     color: Colors.text,
-    flex: 1,
-    fontWeight: '500',
+    fontWeight: '600',
   },
-  tutorIconBtn: {
-    backgroundColor: Colors.primaryLight,
-    padding: 6,
-    borderRadius: 8,
-  },
-  emptyState: {
+  emptyContainer: {
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 48,
@@ -413,10 +589,10 @@ const styles = StyleSheet.create({
   },
   emptyTitle: {
     fontSize: 16,
-    fontWeight: '700',
+    fontWeight: '800',
     color: Colors.text,
   },
-  emptyDesc: {
+  emptySub: {
     fontSize: 13,
     color: Colors.textSecondary,
     textAlign: 'center',

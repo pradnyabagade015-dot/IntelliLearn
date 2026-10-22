@@ -1,10 +1,11 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
+  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, router } from 'expo-router';
@@ -17,17 +18,50 @@ import {
   Topic,
 } from '@/constants/chapters';
 import { Ionicons } from '@expo/vector-icons';
+import { useStudySession, progressService } from '@/services/progress';
 
 export default function ChapterDetailScreen() {
   const params = useLocalSearchParams<{ id?: string; topicNumber?: string }>();
+  const currentSubjectId = params.id || 'bmd-2994511';
+  useStudySession('chapter_notes', currentSubjectId);
+
   const [detailedSubject, setDetailedSubject] = useState<SubjectDetailed | null>(null);
   const [selectedModule, setSelectedModule] = useState<Module | null>(null);
   const [selectedTopic, setSelectedTopic] = useState<Topic | null>(null);
   const [activeTab, setActiveTab] = useState<'syllabus' | 'notes' | 'info'>('syllabus');
+  const [completedTopicNumbers, setCompletedTopicNumbers] = useState<string[]>([]);
+
+  const loadCompletion = useCallback(async () => {
+    try {
+      const m = await progressService.getSubjectMetrics(currentSubjectId);
+      setCompletedTopicNumbers(m.completedTopicNumbers);
+    } catch {
+      // Ignore
+    }
+  }, [currentSubjectId]);
+
+  useEffect(() => {
+    const unsub = progressService.subscribe(() => {
+      loadCompletion();
+    });
+    return unsub;
+  }, [loadCompletion]);
+
+  const handleToggleTopic = async (topicNumber: string) => {
+    await progressService.toggleTopicCompletion(currentSubjectId, topicNumber);
+    loadCompletion();
+  };
 
   useEffect(() => {
     const fetchSubject = async () => {
-      const det = await apiService.getDetailedSubject('bmd-2994511');
+      const subjectId = params.id || 'bmd-2994511';
+      const [det, m] = await Promise.all([
+        apiService.getDetailedSubject(subjectId),
+        progressService.getSubjectMetrics(subjectId),
+      ]);
+      if (m) {
+        setCompletedTopicNumbers(m.completedTopicNumbers);
+      }
       if (det) {
         setDetailedSubject(det);
 
@@ -48,16 +82,16 @@ export default function ChapterDetailScreen() {
       }
     };
     fetchSubject();
-  }, [params.topicNumber]);
+  }, [params.id, params.topicNumber]);
 
   const openAiTutorForTopic = (topic: Topic) => {
     router.push({
       pathname: '/tutor/[chapterId]',
       params: {
-        chapterId: 'bmd-2994511',
+        chapterId: detailedSubject?.id || params.id || 'bmd-2994511',
         topicNumber: topic.topicNumber,
         topicTitle: topic.title,
-        moduleName: selectedModule?.title || 'Business Model Development',
+        moduleName: selectedModule?.title || detailedSubject?.name || 'Subject',
       },
     });
   };
@@ -66,16 +100,27 @@ export default function ChapterDetailScreen() {
     <SafeAreaView style={styles.container} edges={['top']}>
       <Header
         showBack
-        title="Business Model Development"
-        subtitle="Course Code: 2994511 • Semester IV EXTC"
+        title={detailedSubject?.name || 'Subject Details'}
+        subtitle={`Course Code: ${detailedSubject?.code || '2994511'} • Semester IV EXTC`}
         rightAction={
-          <TouchableOpacity
-            style={styles.tutorHeaderBtn}
-            onPress={() => router.push('/tutor/bmd-2994511')}
-          >
-            <Ionicons name="sparkles" size={15} color="#FFFFFF" />
-            <Text style={styles.tutorHeaderBtnText}>AI Tutor</Text>
-          </TouchableOpacity>
+          <View style={{ flexDirection: 'row', gap: 6, alignItems: 'center' }}>
+            {detailedSubject?.code === '2304112' && (
+              <TouchableOpacity
+                style={styles.challengeHeaderBtn}
+                onPress={() => router.push('/challenge' as any)}
+              >
+                <Ionicons name="terminal" size={13} color="#FFFFFF" />
+                <Text style={styles.tutorHeaderBtnText}>Challenge</Text>
+              </TouchableOpacity>
+            )}
+            <TouchableOpacity
+              style={styles.tutorHeaderBtn}
+              onPress={() => router.push(`/tutor/${detailedSubject?.id || params.id || 'bmd-2994511'}` as any)}
+            >
+              <Ionicons name="sparkles" size={13} color="#FFFFFF" />
+              <Text style={styles.tutorHeaderBtnText}>AI Tutor</Text>
+            </TouchableOpacity>
+          </View>
         }
       />
 
@@ -110,6 +155,36 @@ export default function ChapterDetailScreen() {
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
+        {/* Microcontroller Coding Challenge Banner */}
+        {detailedSubject?.code === '2304112' && (
+          <View style={styles.challengeBanner}>
+            <View style={styles.challengeBannerLeft}>
+              <View style={styles.challengeBadge}>
+                <Ionicons name="terminal" size={18} color={Colors.primary} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                  <Text style={styles.challengeBannerTitle}>MCU Coding Challenge</Text>
+                  <View style={styles.newBadgePill}>
+                    <Text style={styles.newBadgeText}>NEW</Text>
+                  </View>
+                </View>
+                <Text style={styles.challengeBannerSub}>
+                  Practice Mode A (Missing Code), Mode B (Find Error) & Mode C (Match Registers)
+                </Text>
+              </View>
+            </View>
+            <TouchableOpacity
+              style={styles.challengeBannerBtn}
+              onPress={() => router.push('/challenge' as any)}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.challengeBannerBtnText}>Start</Text>
+              <Ionicons name="arrow-forward" size={13} color="#FFFFFF" />
+            </TouchableOpacity>
+          </View>
+        )}
+
         {/* SYLLABUS TAB */}
         {activeTab === 'syllabus' && (
           <View style={styles.tabContent}>
@@ -143,35 +218,55 @@ export default function ChapterDetailScreen() {
 
                 {selectedModule?.id === mod.id && (
                   <View style={styles.topicsList}>
-                    {mod.topics.map((top) => (
-                      <TouchableOpacity
-                        key={top.id}
-                        style={[
-                          styles.topicItem,
-                          selectedTopic?.id === top.id && styles.activeTopicItem,
-                        ]}
-                        onPress={() => {
-                          setSelectedTopic(top);
-                          setActiveTab('notes');
-                        }}
-                      >
-                        <View style={styles.topicLeft}>
-                          <Text style={styles.topicNum}>{top.topicNumber}</Text>
-                          <Text style={styles.topicTitle} numberOfLines={2}>
-                            {top.title}
-                          </Text>
-                        </View>
-                        <View style={styles.topicActions}>
-                          <TouchableOpacity
-                            style={styles.topicTutorBtn}
-                            onPress={() => openAiTutorForTopic(top)}
-                          >
-                            <Ionicons name="sparkles" size={14} color={Colors.primary} />
-                          </TouchableOpacity>
-                          <Ionicons name="chevron-forward" size={16} color={Colors.textMuted} />
-                        </View>
-                      </TouchableOpacity>
-                    ))}
+                    {mod.topics.map((top) => {
+                      const isTopCompleted = completedTopicNumbers.includes(top.topicNumber);
+                      return (
+                        <TouchableOpacity
+                          key={top.id}
+                          style={[
+                            styles.topicItem,
+                            selectedTopic?.id === top.id && styles.activeTopicItem,
+                          ]}
+                          onPress={() => {
+                            setSelectedTopic(top);
+                            setActiveTab('notes');
+                          }}
+                        >
+                          <View style={styles.topicLeft}>
+                            <View
+                              style={[
+                                styles.topicNumBadge,
+                                isTopCompleted && styles.topicNumBadgeCompleted,
+                              ]}
+                            >
+                              {isTopCompleted ? (
+                                <Ionicons name="checkmark" size={11} color="#FFFFFF" />
+                              ) : (
+                                <Text style={styles.topicNum}>{top.topicNumber}</Text>
+                              )}
+                            </View>
+                            <Text
+                              style={[
+                                styles.topicTitle,
+                                isTopCompleted && styles.topicTitleCompleted,
+                              ]}
+                              numberOfLines={2}
+                            >
+                              {top.title}
+                            </Text>
+                          </View>
+                          <View style={styles.topicActions}>
+                            <TouchableOpacity
+                              style={styles.topicTutorBtn}
+                              onPress={() => openAiTutorForTopic(top)}
+                            >
+                              <Ionicons name="sparkles" size={14} color={Colors.primary} />
+                            </TouchableOpacity>
+                            <Ionicons name="chevron-forward" size={16} color={Colors.textMuted} />
+                          </View>
+                        </TouchableOpacity>
+                      );
+                    })}
                   </View>
                 )}
               </View>
@@ -186,18 +281,66 @@ export default function ChapterDetailScreen() {
               <View style={styles.notesContainer}>
                 {/* Topic Header Banner */}
                 <View style={styles.topicBanner}>
-                  <View style={styles.topicBadge}>
-                    <Text style={styles.topicBadgeText}>Topic {selectedTopic.topicNumber}</Text>
+                  <View style={styles.topicBadgeRow}>
+                    <View style={styles.topicBadge}>
+                      <Text style={styles.topicBadgeText}>Topic {selectedTopic.topicNumber}</Text>
+                    </View>
+                    {completedTopicNumbers.includes(selectedTopic.topicNumber) && (
+                      <View style={styles.completedBadgePill}>
+                        <Ionicons name="checkmark-circle" size={13} color="#15803D" />
+                        <Text style={styles.completedBadgePillText}>Completed</Text>
+                      </View>
+                    )}
                   </View>
                   <Text style={styles.topicHeaderTitle}>{selectedTopic.title}</Text>
-                  <TouchableOpacity
-                    style={styles.askAiTutorBanner}
-                    onPress={() => openAiTutorForTopic(selectedTopic)}
-                    activeOpacity={0.8}
-                  >
-                    <Ionicons name="sparkles" size={16} color="#FFFFFF" />
-                    <Text style={styles.askAiTutorBannerText}>Ask Business Model AI Tutor</Text>
-                  </TouchableOpacity>
+
+                  <View style={styles.topicBannerActionRow}>
+                    <TouchableOpacity
+                      style={[
+                        styles.toggleCompleteBtn,
+                        completedTopicNumbers.includes(selectedTopic.topicNumber) &&
+                          styles.toggleCompleteBtnDone,
+                      ]}
+                      onPress={() => handleToggleTopic(selectedTopic.topicNumber)}
+                      activeOpacity={0.8}
+                    >
+                      <Ionicons
+                        name={
+                          completedTopicNumbers.includes(selectedTopic.topicNumber)
+                            ? 'checkmark-circle'
+                            : 'checkmark-circle-outline'
+                        }
+                        size={17}
+                        color={
+                          completedTopicNumbers.includes(selectedTopic.topicNumber)
+                            ? '#15803D'
+                            : Colors.primary
+                        }
+                      />
+                      <Text
+                        style={[
+                          styles.toggleCompleteBtnText,
+                          completedTopicNumbers.includes(selectedTopic.topicNumber) &&
+                            styles.toggleCompleteBtnTextDone,
+                        ]}
+                      >
+                        {completedTopicNumbers.includes(selectedTopic.topicNumber)
+                          ? 'Completed'
+                          : 'Mark Completed'}
+                      </Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                      style={styles.askAiTutorBanner}
+                      onPress={() => openAiTutorForTopic(selectedTopic)}
+                      activeOpacity={0.8}
+                    >
+                      <Ionicons name="sparkles" size={15} color="#FFFFFF" />
+                      <Text style={styles.askAiTutorBannerText}>
+                        Ask AI Tutor
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
                 </View>
 
                 {/* 1. Simple Definition */}
@@ -209,11 +352,11 @@ export default function ChapterDetailScreen() {
                   <Text style={styles.noteText}>{selectedTopic.notes.simpleDefinition}</Text>
                 </View>
 
-                {/* 2. Detailed Explanation */}
+                {/* 2. Brief Explanation */}
                 <View style={styles.noteSection}>
                   <View style={styles.noteSectionHeader}>
                     <Text style={styles.noteSectionEmoji}>📖</Text>
-                    <Text style={styles.noteSectionTitle}>2. Detailed Explanation</Text>
+                    <Text style={styles.noteSectionTitle}>2. Brief Explanation</Text>
                   </View>
                   <Text style={styles.noteText}>{selectedTopic.notes.detailedExplanation}</Text>
                 </View>
@@ -222,7 +365,7 @@ export default function ChapterDetailScreen() {
                 <View style={styles.noteSection}>
                   <View style={styles.noteSectionHeader}>
                     <Text style={styles.noteSectionEmoji}>📌</Text>
-                    <Text style={styles.noteSectionTitle}>3. Important Key Points</Text>
+                    <Text style={styles.noteSectionTitle}>3. Important Points</Text>
                   </View>
                   {selectedTopic.notes.importantPoints.map((point, pIdx) => (
                     <View key={pIdx} style={styles.bulletRow}>
@@ -232,12 +375,27 @@ export default function ChapterDetailScreen() {
                   ))}
                 </View>
 
+                {/* Architecture & Concept Diagram */}
+                {Boolean(selectedTopic.notes.diagram) && (
+                  <View style={[styles.noteSection, { backgroundColor: '#0F172A', borderColor: '#334155' }]}>
+                    <View style={styles.noteSectionHeader}>
+                      <Text style={styles.noteSectionEmoji}>📐</Text>
+                      <Text style={[styles.noteSectionTitle, { color: '#38BDF8' }]}>
+                        Architecture & Concept Diagram
+                      </Text>
+                    </View>
+                    <ScrollView horizontal showsHorizontalScrollIndicator={true} style={styles.diagramScroll}>
+                      <Text style={styles.diagramText}>{selectedTopic.notes.diagram}</Text>
+                    </ScrollView>
+                  </View>
+                )}
+
                 {/* 4. Real-World Example */}
                 <View style={[styles.noteSection, { backgroundColor: Colors.primaryLight }]}>
                   <View style={styles.noteSectionHeader}>
                     <Text style={styles.noteSectionEmoji}>🏢</Text>
                     <Text style={[styles.noteSectionTitle, { color: Colors.primaryDark }]}>
-                      4. Simple Real-World Example
+                      4. Real-World Example
                     </Text>
                   </View>
                   <Text style={[styles.noteText, { color: Colors.primaryDark }]}>
@@ -245,12 +403,12 @@ export default function ChapterDetailScreen() {
                   </Text>
                 </View>
 
-                {/* 5. Exam-Oriented Points */}
+                {/* 5. Exam Point */}
                 <View style={[styles.noteSection, { backgroundColor: '#FEF3C7' }]}>
                   <View style={styles.noteSectionHeader}>
                     <Text style={styles.noteSectionEmoji}>🎯</Text>
                     <Text style={[styles.noteSectionTitle, { color: '#92400E' }]}>
-                      5. Exam-Oriented High Yield Points
+                      5. Important Exam Point
                     </Text>
                   </View>
                   {selectedTopic.notes.examOrientedPoints.map((pt, idx) => (
@@ -300,7 +458,7 @@ export default function ChapterDetailScreen() {
             {detailedSubject && (
               <View style={styles.infoContainer}>
                 <View style={styles.infoCard}>
-                  <Text style={styles.infoHeading}>Course Details (2994511)</Text>
+                  <Text style={styles.infoHeading}>Course Details ({detailedSubject.code})</Text>
                   <View style={styles.infoPair}>
                     <Text style={styles.infoKey}>Vertical / Stream:</Text>
                     <Text style={styles.infoVal}>{detailedSubject.vertical}</Text>
@@ -359,7 +517,84 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     gap: 4,
   },
+  challengeHeaderBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#0284C7',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 20,
+    gap: 4,
+  },
   tutorHeaderBtnText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '800',
+  },
+  challengeBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: Colors.card,
+    borderRadius: 16,
+    padding: 12,
+    borderWidth: 1.5,
+    borderColor: '#BAE6FD',
+    marginBottom: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 4,
+    elevation: 2,
+    gap: 8,
+  },
+  challengeBannerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    flex: 1,
+  },
+  challengeBadge: {
+    width: 38,
+    height: 38,
+    borderRadius: 12,
+    backgroundColor: '#E0F2FE',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  challengeBannerTitle: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: Colors.text,
+  },
+  challengeBannerSub: {
+    fontSize: 11,
+    color: Colors.textSecondary,
+    lineHeight: 14,
+    marginTop: 2,
+  },
+  newBadgePill: {
+    backgroundColor: '#DC2626',
+    paddingHorizontal: 5,
+    paddingVertical: 1,
+    borderRadius: 4,
+  },
+  newBadgeText: {
+    fontSize: 9,
+    fontWeight: '900',
+    color: '#FFFFFF',
+    letterSpacing: 0.3,
+  },
+  challengeBannerBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#0284C7',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 10,
+    gap: 3,
+  },
+  challengeBannerBtnText: {
     color: '#FFFFFF',
     fontSize: 12,
     fontWeight: '800',
@@ -456,7 +691,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 10,
     borderBottomWidth: 1,
-    borderBottomColor: '#F1F5F9',
+    borderBottomColor: Colors.cardBorder,
   },
   activeTopicItem: {
     backgroundColor: Colors.primaryLight,
@@ -467,17 +702,31 @@ const styles = StyleSheet.create({
     gap: 8,
     flex: 1,
   },
+  topicNumBadge: {
+    minWidth: 26,
+    height: 20,
+    borderRadius: 6,
+    backgroundColor: Colors.primaryLight,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 4,
+  },
+  topicNumBadgeCompleted: {
+    backgroundColor: '#16A34A',
+  },
   topicNum: {
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: '700',
-    color: Colors.primary,
-    width: 32,
+    color: Colors.primaryDark,
   },
   topicTitle: {
     fontSize: 13,
     color: Colors.text,
     flex: 1,
     fontWeight: '600',
+  },
+  topicTitleCompleted: {
+    color: Colors.textSecondary,
   },
   topicActions: {
     flexDirection: 'row',
@@ -500,6 +749,11 @@ const styles = StyleSheet.create({
     borderColor: Colors.cardBorder,
     gap: 8,
   },
+  topicBadgeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
   topicBadge: {
     backgroundColor: Colors.primaryLight,
     paddingHorizontal: 8,
@@ -512,12 +766,57 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: Colors.primaryDark,
   },
+  completedBadgePill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: '#DCFCE7',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
+  },
+  completedBadgePillText: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: '#15803D',
+  },
   topicHeaderTitle: {
     fontSize: 18,
     fontWeight: '900',
     color: Colors.text,
   },
+  topicBannerActionRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginTop: 6,
+  },
+  toggleCompleteBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: Colors.primaryLight,
+    borderWidth: 1.5,
+    borderColor: Colors.primary,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: 10,
+    gap: 6,
+  },
+  toggleCompleteBtnDone: {
+    backgroundColor: '#DCFCE7',
+    borderColor: '#86EFAC',
+  },
+  toggleCompleteBtnText: {
+    color: Colors.primaryDark,
+    fontSize: 12,
+    fontWeight: '800',
+  },
+  toggleCompleteBtnTextDone: {
+    color: '#15803D',
+  },
   askAiTutorBanner: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -525,11 +824,10 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderRadius: 10,
     gap: 6,
-    marginTop: 4,
   },
   askAiTutorBannerText: {
     color: '#FFFFFF',
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '800',
   },
   noteSection: {
@@ -636,5 +934,17 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: Colors.textSecondary,
     lineHeight: 18,
+  },
+  diagramScroll: {
+    marginVertical: 4,
+    backgroundColor: '#0F172A',
+    borderRadius: 8,
+    padding: 12,
+  },
+  diagramText: {
+    fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
+    fontSize: 11,
+    lineHeight: 16,
+    color: '#38BDF8',
   },
 });

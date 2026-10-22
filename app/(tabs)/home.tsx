@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -9,61 +9,135 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Colors } from '@/constants/colors';
-import { Header } from '@/components/Header';
-import { ChapterCard } from '@/components/ChapterCard';
-import { QuizCard } from '@/components/QuizCard';
-import { ProgressBar } from '@/components/ProgressBar';
-import { apiService } from '@/services/api';
-import { Subject, DailyQuiz, StudentProfile } from '@/constants/chapters';
-import { router } from 'expo-router';
+import { authService } from '@/services/auth';
+import { StudentProfile } from '@/constants/chapters';
+import { router, useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+
+interface FeatureItem {
+  id: string;
+  emoji: string;
+  title: string;
+  subtitle: string;
+  route: string;
+  badge?: string;
+  iconBg: string;
+  borderColor: string;
+}
+
+const FEATURE_CARDS: FeatureItem[] = [
+  {
+    id: 'chapters',
+    emoji: '📚',
+    title: 'Learn Chapters',
+    subtitle: 'Explore the 6 official syllabus units and structured topic notes',
+    route: '/(tabs)/chapters',
+    iconBg: '#EBF5EE',
+    borderColor: '#D1E7D6',
+  },
+  {
+    id: 'tutor',
+    emoji: '🤖',
+    title: 'AI Tutor',
+    subtitle: 'Chat with AI for 5 & 10-mark model answers, definitions and revisions',
+    route: '/tutor/bmd-2994511',
+    badge: 'LIVE AI',
+    iconBg: '#E6FFFA',
+    borderColor: '#CCFBF1',
+  },
+  {
+    id: 'doubt',
+    emoji: '💬',
+    title: 'Ask a Doubt',
+    subtitle: 'Get instant direct answers, explanations, examples & exam points',
+    route: '/doubt',
+    badge: 'INSTANT',
+    iconBg: '#FEF3C7',
+    borderColor: '#FDE68A',
+  },
+  {
+    id: 'challenge',
+    emoji: '⚡',
+    title: 'MCU Coding Challenge',
+    subtitle: 'Practice missing code, find bugs & match registers for 8051 and ARM7',
+    route: '/challenge',
+    badge: 'NEW',
+    iconBg: '#E0F2FE',
+    borderColor: '#BAE6FD',
+  },
+  {
+    id: 'quiz',
+    emoji: '📝',
+    title: 'Take Quiz',
+    subtitle: 'Practice unit-wise quizzes and test your exam readiness',
+    route: '/(tabs)/quiz',
+    iconBg: '#EFF6FF',
+    borderColor: '#DBEAFE',
+  },
+  {
+    id: 'progress',
+    emoji: '📊',
+    title: 'My Progress',
+    subtitle: 'Check your syllabus completion rate, streaks and study hours',
+    route: '/(tabs)/progress',
+    iconBg: '#F3E8FF',
+    borderColor: '#E9D5FF',
+  },
+];
 
 export default function HomeScreen() {
   const [student, setStudent] = useState<StudentProfile | null>(null);
-  const [subjects, setSubjects] = useState<Subject[]>([]);
-  const [dailyQuiz, setDailyQuiz] = useState<DailyQuiz | null>(null);
   const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
-    let isMounted = true;
-    Promise.all([
-      apiService.getStudentProfile(),
-      apiService.getSubjects(),
-      apiService.getAllQuizzes(),
-    ]).then(([stud, subs, quizzes]) => {
-      if (isMounted) {
-        setStudent(stud);
-        setSubjects(subs);
-        setDailyQuiz(quizzes[0] || null);
-      }
+    const unsubscribe = authService.subscribe((user) => {
+      setStudent(user);
     });
-    return () => {
-      isMounted = false;
-    };
+    return unsubscribe;
   }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      let isMounted = true;
+      authService.getCurrentUser().then((data) => {
+        if (isMounted) setStudent(data);
+      });
+      return () => {
+        isMounted = false;
+      };
+    }, [])
+  );
 
   const onRefresh = async () => {
     setRefreshing(true);
-    const [stud, subs, quizzes] = await Promise.all([
-      apiService.getStudentProfile(),
-      apiService.getSubjects(),
-      apiService.getAllQuizzes(),
-    ]);
-    setStudent(stud);
-    setSubjects(subs);
-    setDailyQuiz(quizzes[0] || null);
+    const data = await authService.getCurrentUser();
+    setStudent(data);
     setRefreshing(false);
   };
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
-      <Header
-        studentName={student?.name || 'Alex'}
-        streakDays={student?.streakDays || 7}
-      />
+      {/* Top Header */}
+      <View style={styles.header}>
+        <View style={styles.headerLeft}>
+          <Text style={styles.greetingTitle}>
+            {student?.name ? `Hello, ${student.name} 👋` : 'Hello, Student 👋'}
+          </Text>
+          <Text style={styles.greetingSub}>Welcome to your AI study portal</Text>
+        </View>
+
+        <TouchableOpacity
+          style={styles.profileBtn}
+          onPress={() => router.push('/(tabs)/profile')}
+          activeOpacity={0.8}
+        >
+          <Ionicons name="person-circle-outline" size={34} color={Colors.primary} />
+        </TouchableOpacity>
+      </View>
 
       <ScrollView
         contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -72,133 +146,128 @@ export default function HomeScreen() {
           />
         }
       >
-        {/* Main Hero Subject Banner */}
-        <View style={styles.heroCard}>
-          <View style={styles.heroHeader}>
-            <View style={styles.heroBadge}>
-              <Text style={styles.heroBadgeText}>💼 Course Code: 2994511 • 2 Credits</Text>
+        {/* Semester IV Subjects Section */}
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>Enrolled Subjects (Semester IV)</Text>
+          <Text style={styles.sectionSubtitle}>Select a subject to start learning</Text>
+        </View>
+
+        {/* Subject Card 1: Microcontrollers */}
+        <View style={[styles.courseBanner, { borderColor: '#BAE6FD' }]}>
+          <View style={styles.courseHeaderRow}>
+            <View style={[styles.courseTag, { backgroundColor: '#E0F2FE' }]}>
+              <Text style={[styles.courseTagText, { color: '#0369A1' }]}>⚡ EXTC Core</Text>
             </View>
-            <View style={styles.progressPercentPill}>
-              <Text style={styles.progressPercentPillText}>
-                {student?.semesterProgress || 68}% Done
-              </Text>
-            </View>
+            <Text style={styles.courseCodeText}>Course Code: 2304112 • 3 Credits</Text>
           </View>
 
-          <Text style={styles.heroMainTitle}>Business Model Development</Text>
-          <Text style={styles.heroSubtitle}>
-            AI-powered learning for EXTC Semester IV students
+          <Text style={styles.courseTitle}>Microcontrollers</Text>
+          <Text style={styles.courseDesc}>
+            University of Mumbai EXTC • 8051, ARM7TDMI, Memory & Peripherals
           </Text>
 
-          <View style={styles.progressContainer}>
-            <View style={styles.progressLabelRow}>
-              <Text style={styles.progressSubLabel}>Syllabus Completion</Text>
-              <Text style={styles.progressSubValue}>4 of 6 Units</Text>
-            </View>
-            <ProgressBar
-              progress={student?.semesterProgress || 68}
-              color={Colors.primary}
-              height={8}
-            />
-          </View>
+          <View style={styles.subjectActionsRow}>
+            <TouchableOpacity
+              style={[styles.subjectActionBtn, { backgroundColor: Colors.primary }]}
+              onPress={() => router.push('/chapter/micro-2304112')}
+              activeOpacity={0.8}
+            >
+              <Ionicons name="book-outline" size={15} color="#FFFFFF" />
+              <Text style={styles.subjectActionBtnText}>Notes</Text>
+            </TouchableOpacity>
 
-          <View style={styles.heroStatsGrid}>
-            <View style={styles.heroStatItem}>
-              <Text style={styles.heroStatVal}>{student?.studyHoursThisWeek || 19.5}h</Text>
-              <Text style={styles.heroStatLbl}>Study This Week</Text>
-            </View>
-            <View style={styles.heroStatDivider} />
-            <View style={styles.heroStatItem}>
-              <Text style={styles.heroStatVal}>{student?.doubtsResolved || 38}</Text>
-              <Text style={styles.heroStatLbl}>Doubts Solved</Text>
-            </View>
-            <View style={styles.heroStatDivider} />
-            <View style={styles.heroStatItem}>
-              <Text style={styles.heroStatVal}>{student?.totalXp || 1950}</Text>
-              <Text style={styles.heroStatLbl}>Total XP</Text>
-            </View>
-          </View>
-        </View>
+            <TouchableOpacity
+              style={[styles.subjectActionBtn, { backgroundColor: '#0284C7' }]}
+              onPress={() => router.push('/tutor/micro-2304112')}
+              activeOpacity={0.8}
+            >
+              <Ionicons name="sparkles" size={15} color="#FFFFFF" />
+              <Text style={styles.subjectActionBtnText}>AI Tutor</Text>
+            </TouchableOpacity>
 
-        {/* AI Action Banners */}
-        <View style={styles.actionGrid}>
-          {/* AI Tutor Card */}
-          <TouchableOpacity
-            style={[styles.actionBanner, { backgroundColor: Colors.primaryLight, borderColor: Colors.cardBorder }]}
-            onPress={() => router.push('/tutor/bmd-2994511')}
-            activeOpacity={0.8}
-          >
-            <View style={styles.actionHeader}>
-              <View style={[styles.actionIcon, { backgroundColor: Colors.primary }]}>
-                <Ionicons name="sparkles" size={18} color="#FFFFFF" />
-              </View>
-              <View style={styles.actionLiveTag}>
-                <Text style={styles.actionLiveText}>AI TUTOR</Text>
-              </View>
-            </View>
-            <Text style={styles.actionTitle}>AI Study Tutor</Text>
-            <Text style={styles.actionDesc}>
-              5-mark model answers, BMC canvas, IPR patents & quick revisions.
-            </Text>
-            <View style={styles.actionLinkRow}>
-              <Text style={[styles.actionLinkText, { color: Colors.primaryDark }]}>
-                Open AI Tutor
-              </Text>
-              <Ionicons name="arrow-forward" size={14} color={Colors.primaryDark} />
-            </View>
-          </TouchableOpacity>
-
-          {/* AI Doubt Solver Card */}
-          <TouchableOpacity
-            style={[styles.actionBanner, { backgroundColor: Colors.secondaryLight, borderColor: '#C7D2FE' }]}
-            onPress={() => router.push('/doubt')}
-            activeOpacity={0.8}
-          >
-            <View style={styles.actionHeader}>
-              <View style={[styles.actionIcon, { backgroundColor: Colors.secondary }]}>
-                <Ionicons name="bulb" size={18} color="#FFFFFF" />
-              </View>
-              <View style={[styles.actionLiveTag, { backgroundColor: '#E0E7FF' }]}>
-                <Text style={[styles.actionLiveText, { color: Colors.secondaryDark }]}>SOLVER</Text>
-              </View>
-            </View>
-            <Text style={styles.actionTitle}>Doubt Solver</Text>
-            <Text style={styles.actionDesc}>
-              Instant answers for Angel vs VC, Patents Act 1970, MVP & unit economics.
-            </Text>
-            <View style={styles.actionLinkRow}>
-              <Text style={[styles.actionLinkText, { color: Colors.secondaryDark }]}>
-                Solve a Doubt
-              </Text>
-              <Ionicons name="arrow-forward" size={14} color={Colors.secondaryDark} />
-            </View>
-          </TouchableOpacity>
-        </View>
-
-        {/* Daily Business Model Challenge */}
-        {dailyQuiz && (
-          <View style={styles.section}>
-            <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>Daily Quiz Challenge</Text>
-              <TouchableOpacity onPress={() => router.push('/(tabs)/quiz')}>
-                <Text style={styles.seeAllText}>All Quizzes</Text>
-              </TouchableOpacity>
-            </View>
-            <QuizCard quiz={dailyQuiz} />
-          </View>
-        )}
-
-        {/* Official Syllabus Course */}
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Course Syllabus & Units</Text>
-            <TouchableOpacity onPress={() => router.push('/(tabs)/chapters')}>
-              <Text style={styles.seeAllText}>View all 6 units</Text>
+            <TouchableOpacity
+              style={[styles.subjectActionBtn, { backgroundColor: '#7C3AED' }]}
+              onPress={() => router.push('/challenge' as any)}
+              activeOpacity={0.8}
+            >
+              <Ionicons name="terminal" size={15} color="#FFFFFF" />
+              <Text style={styles.subjectActionBtnText}>Challenge</Text>
             </TouchableOpacity>
           </View>
+        </View>
 
-          {subjects.map((sub) => (
-            <ChapterCard key={sub.id} subject={sub} />
+        {/* Subject Card 2: Business Model Development */}
+        <View style={styles.courseBanner}>
+          <View style={styles.courseHeaderRow}>
+            <View style={styles.courseTag}>
+              <Text style={styles.courseTagText}>💼 Management</Text>
+            </View>
+            <Text style={styles.courseCodeText}>Course Code: 2994511 • 2 Credits</Text>
+          </View>
+
+          <Text style={styles.courseTitle}>Business Model Development</Text>
+          <Text style={styles.courseDesc}>
+            University of Mumbai • Entrepreneurship, IPR, BMC & Digital Models
+          </Text>
+
+          <View style={styles.subjectActionsRow}>
+            <TouchableOpacity
+              style={[styles.subjectActionBtn, { backgroundColor: Colors.primary }]}
+              onPress={() => router.push('/chapter/bmd-2994511')}
+              activeOpacity={0.8}
+            >
+              <Ionicons name="book-outline" size={15} color="#FFFFFF" />
+              <Text style={styles.subjectActionBtnText}>Study Notes</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.subjectActionBtn, { backgroundColor: Colors.secondary }]}
+              onPress={() => router.push('/tutor/bmd-2994511')}
+              activeOpacity={0.8}
+            >
+              <Ionicons name="sparkles" size={15} color="#FFFFFF" />
+              <Text style={styles.subjectActionBtnText}>AI Tutor</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {/* Feature Cards Section Header */}
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>Learning Tools</Text>
+          <Text style={styles.sectionSubtitle}>Select an activity to get started</Text>
+        </View>
+
+        {/* Feature Cards Grid/List */}
+        <View style={styles.cardsContainer}>
+          {FEATURE_CARDS.map((card) => (
+            <TouchableOpacity
+              key={card.id}
+              style={[styles.featureCard, { borderColor: card.borderColor }]}
+              onPress={() => router.push(card.route as any)}
+              activeOpacity={0.8}
+            >
+              <View style={[styles.cardIconBox, { backgroundColor: card.iconBg }]}>
+                <Text style={styles.cardEmoji}>{card.emoji}</Text>
+              </View>
+
+              <View style={styles.cardContent}>
+                <View style={styles.cardTitleRow}>
+                  <Text style={styles.cardTitle}>{card.title}</Text>
+                  {card.badge ? (
+                    <View style={styles.badgePill}>
+                      <Text style={styles.badgePillText}>{card.badge}</Text>
+                    </View>
+                  ) : null}
+                </View>
+                <Text style={styles.cardSubtitle} numberOfLines={2}>
+                  {card.subtitle}
+                </Text>
+              </View>
+
+              <View style={styles.cardArrow}>
+                <Ionicons name="chevron-forward" size={20} color={Colors.textMuted} />
+              </View>
+            </TouchableOpacity>
           ))}
         </View>
       </ScrollView>
@@ -211,184 +280,181 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.background,
   },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingTop: 14,
+    paddingBottom: 14,
+    backgroundColor: Colors.card,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.cardBorder,
+  },
+  headerLeft: {
+    flex: 1,
+  },
+  greetingTitle: {
+    fontSize: 22,
+    fontWeight: '900',
+    color: Colors.text,
+    letterSpacing: -0.4,
+  },
+  greetingSub: {
+    fontSize: 13,
+    color: Colors.textSecondary,
+    marginTop: 2,
+    fontWeight: '500',
+  },
+  profileBtn: {
+    padding: 2,
+  },
   scrollContent: {
-    padding: 16,
-    paddingBottom: 32,
+    padding: 18,
+    paddingBottom: 36,
     gap: 16,
   },
-  heroCard: {
+  courseBanner: {
     backgroundColor: Colors.card,
-    borderRadius: 20,
-    padding: 18,
-    borderWidth: 1,
+    borderRadius: 18,
+    padding: 20,
+    borderWidth: 1.5,
     borderColor: Colors.cardBorder,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 5,
-    elevation: 2,
+    shadowColor: Colors.primary,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 3,
   },
-  heroHeader: {
+  courseHeaderRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
+    justifyContent: 'space-between',
     marginBottom: 10,
   },
-  heroBadge: {
+  courseTag: {
     backgroundColor: Colors.primaryLight,
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 8,
   },
-  heroBadgeText: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: Colors.primaryDark,
-  },
-  progressPercentPill: {
-    backgroundColor: Colors.primaryLight,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
-  },
-  progressPercentPillText: {
+  courseTagText: {
     fontSize: 12,
     fontWeight: '800',
-    color: Colors.primary,
+    color: Colors.primaryDark,
   },
-  heroMainTitle: {
+  courseCodeText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: Colors.textSecondary,
+  },
+  courseTitle: {
     fontSize: 22,
     fontWeight: '900',
     color: Colors.text,
-    letterSpacing: -0.5,
+    letterSpacing: -0.4,
+    marginBottom: 4,
   },
-  heroSubtitle: {
+  courseDesc: {
     fontSize: 13,
-    fontWeight: '600',
-    color: Colors.primaryDark,
-    marginTop: 2,
-    marginBottom: 14,
-  },
-  progressContainer: {
-    gap: 6,
-    marginBottom: 14,
-  },
-  progressLabelRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  progressSubLabel: {
-    fontSize: 12,
     color: Colors.textSecondary,
-    fontWeight: '500',
+    lineHeight: 18,
+    marginBottom: 12,
   },
-  progressSubValue: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: Colors.text,
+  subjectActionsRow: {
+    flexDirection: 'row',
+    gap: 10,
+    marginTop: 4,
   },
-  heroStatsGrid: {
+  subjectActionBtn: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingTop: 12,
-    borderTopWidth: 1,
-    borderTopColor: Colors.cardBorder,
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 10,
+    borderRadius: 12,
   },
-  heroStatItem: {
-    flex: 1,
+  subjectActionBtnText: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: '800',
+  },
+  sectionHeader: {
+    marginTop: 4,
+    marginBottom: 2,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: Colors.text,
+    letterSpacing: -0.3,
+  },
+  sectionSubtitle: {
+    fontSize: 13,
+    color: Colors.textSecondary,
+    marginTop: 2,
+  },
+  cardsContainer: {
+    gap: 12,
+  },
+  featureCard: {
+    flexDirection: 'row',
     alignItems: 'center',
+    backgroundColor: Colors.card,
+    borderRadius: 18,
+    padding: 16,
+    borderWidth: 1.5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 5,
+    elevation: 2,
+    minHeight: 88,
   },
-  heroStatDivider: {
-    width: 1,
-    height: 24,
-    backgroundColor: Colors.cardBorder,
+  cardIconBox: {
+    width: 52,
+    height: 52,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 14,
   },
-  heroStatVal: {
-    fontSize: 15,
+  cardEmoji: {
+    fontSize: 26,
+  },
+  cardContent: {
+    flex: 1,
+    paddingRight: 6,
+  },
+  cardTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 3,
+  },
+  cardTitle: {
+    fontSize: 16,
     fontWeight: '800',
     color: Colors.text,
   },
-  heroStatLbl: {
-    fontSize: 11,
-    color: Colors.textSecondary,
-    marginTop: 2,
-    fontWeight: '500',
-  },
-  actionGrid: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  actionBanner: {
-    flex: 1,
-    borderRadius: 16,
-    padding: 14,
-    borderWidth: 1,
-  },
-  actionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 10,
-  },
-  actionIcon: {
-    width: 36,
-    height: 36,
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  actionLiveTag: {
+  badgePill: {
     backgroundColor: Colors.primaryLight,
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 6,
   },
-  actionLiveText: {
-    fontSize: 9,
+  badgePillText: {
+    fontSize: 10,
     fontWeight: '800',
     color: Colors.primaryDark,
-    letterSpacing: 0.5,
   },
-  actionTitle: {
-    fontSize: 15,
-    fontWeight: '800',
-    color: Colors.text,
-    marginBottom: 4,
-  },
-  actionDesc: {
-    fontSize: 11,
+  cardSubtitle: {
+    fontSize: 12,
     color: Colors.textSecondary,
-    lineHeight: 15,
-    marginBottom: 12,
+    lineHeight: 17,
   },
-  actionLinkRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  actionLinkText: {
-    fontSize: 12,
-    fontWeight: '800',
-  },
-  section: {
-    gap: 8,
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginTop: 4,
-  },
-  sectionTitle: {
-    fontSize: 17,
-    fontWeight: '800',
-    color: Colors.text,
-    letterSpacing: -0.3,
-  },
-  seeAllText: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: Colors.primary,
+  cardArrow: {
+    marginLeft: 4,
   },
 });

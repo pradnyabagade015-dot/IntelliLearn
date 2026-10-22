@@ -22,12 +22,20 @@ import {
   ChatMessage,
   TopicContext,
 } from '@/services/ai';
-import { businessModelSubject, Module, Topic } from '@/constants/chapters';
+import { businessModelSubject, microcontrollerSubject, Module, Topic, SubjectDetailed } from '@/constants/chapters';
 import { Ionicons } from '@expo/vector-icons';
+import { useStudySession } from '@/services/progress';
 
-function findTopic(topicNumber?: string): { topic: Topic; moduleTitle: string } {
+function getSubjectForChapterId(chapterId?: string): SubjectDetailed {
+  if (chapterId && (chapterId.toLowerCase().includes('micro') || chapterId === '2304112')) {
+    return microcontrollerSubject;
+  }
+  return businessModelSubject;
+}
+
+function findTopic(activeSubject: SubjectDetailed, topicNumber?: string): { topic: Topic; moduleTitle: string } {
   if (topicNumber) {
-    for (const mod of businessModelSubject.modules) {
+    for (const mod of activeSubject.modules) {
       const found = mod.topics.find((t: Topic) => t.topicNumber === topicNumber);
       if (found) {
         return { topic: found, moduleTitle: mod.title };
@@ -36,10 +44,10 @@ function findTopic(topicNumber?: string): { topic: Topic; moduleTitle: string } 
   }
   return {
     topic:
-      businessModelSubject.modules[0]?.topics[0] ||
-      businessModelSubject.modules[1]?.topics[0],
+      activeSubject.modules[0]?.topics[0] ||
+      activeSubject.modules[1]?.topics[0],
     moduleTitle:
-      businessModelSubject.modules[0]?.title || 'Unit I: Introduction to Entrepreneurship',
+      activeSubject.modules[0]?.title || activeSubject.name,
   };
 }
 
@@ -57,14 +65,17 @@ export default function AiTutorScreen() {
     moduleName?: string;
   }>();
 
-  const initialContext = findTopic(params.topicNumber);
+  useStudySession('tutor', params.chapterId || 'bmd-2994511');
+
+  const activeSubject = getSubjectForChapterId(params.chapterId);
+  const initialContext = findTopic(activeSubject, params.topicNumber);
   const [currentTopic, setCurrentTopic] = useState<Topic>(initialContext.topic);
   const [currentModuleName, setCurrentModuleName] = useState<string>(initialContext.moduleTitle);
 
   const [messages, setMessages] = useState<ChatMessage[]>(() => {
     const ctx: TopicContext = {
-      subjectName: 'Business Model Development',
-      courseCode: '2994511',
+      subjectName: activeSubject.name,
+      courseCode: activeSubject.code,
       moduleName: initialContext.moduleTitle,
       topicNumber: initialContext.topic.topicNumber,
       topicTitle: initialContext.topic.title,
@@ -91,8 +102,8 @@ export default function AiTutorScreen() {
     setShowTopicSelector(false);
 
     const context: TopicContext = {
-      subjectName: 'Business Model Development',
-      courseCode: '2994511',
+      subjectName: activeSubject.name,
+      courseCode: activeSubject.code,
       moduleName: moduleTitle,
       topicNumber: topic.topicNumber,
       topicTitle: topic.title,
@@ -130,8 +141,8 @@ export default function AiTutorScreen() {
 
     try {
       const context: TopicContext = {
-        subjectName: 'Business Model Development',
-        courseCode: '2994511',
+        subjectName: activeSubject.name,
+        courseCode: activeSubject.code,
         moduleName: currentModuleName,
         topicNumber: currentTopic.topicNumber,
         topicTitle: currentTopic.title,
@@ -168,8 +179,8 @@ export default function AiTutorScreen() {
     <SafeAreaView style={styles.container} edges={['top']}>
       <Header
         showBack
-        title="Business Model AI Tutor"
-        subtitle="Business Model Development (2994511)"
+        title={`${activeSubject.name} AI Tutor`}
+        subtitle={`${activeSubject.name} (${activeSubject.code})`}
         rightAction={
           <TouchableOpacity
             style={styles.switchTopicBtn}
@@ -184,7 +195,9 @@ export default function AiTutorScreen() {
       {/* Active Topic Banner */}
       <View style={styles.contextBanner}>
         <View style={styles.contextIconWrap}>
-          <Text style={styles.contextIconText}>💼</Text>
+          <Text style={styles.contextIconText}>
+            {activeSubject.code === '2304112' ? '⚡' : '💼'}
+          </Text>
         </View>
         <View style={{ flex: 1 }}>
           <Text style={styles.contextModuleText} numberOfLines={1}>
@@ -199,9 +212,9 @@ export default function AiTutorScreen() {
       {/* Topic Selector Drawer / Overlay */}
       {showTopicSelector && (
         <View style={styles.topicSelectorBox}>
-          <Text style={styles.selectorHeader}>Select Business Model Development Topic:</Text>
+          <Text style={styles.selectorHeader}>Select {activeSubject.name} Topic:</Text>
           <ScrollView style={{ maxHeight: 240 }}>
-            {businessModelSubject.modules.map((m: Module) => (
+            {activeSubject.modules.map((m: Module) => (
               <View key={m.id} style={styles.selectorModuleGroup}>
                 <Text style={styles.selectorModuleTitle}>{m.title}</Text>
                 {m.topics.map((t: Topic) => (
@@ -269,7 +282,9 @@ export default function AiTutorScreen() {
           {isTyping && (
             <View style={styles.typingIndicator}>
               <ActivityIndicator size="small" color={Colors.primary} />
-              <Text style={styles.typingText}>AI Tutor is referencing 2994511 syllabus notes...</Text>
+              <Text style={styles.typingText}>
+                AI Tutor is referencing {activeSubject.code} syllabus notes...
+              </Text>
             </View>
           )}
         </ScrollView>
@@ -310,16 +325,16 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: Colors.primaryLight,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 16,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
     gap: 4,
     borderWidth: 1,
     borderColor: Colors.cardBorder,
   },
   switchTopicBtnText: {
     fontSize: 12,
-    fontWeight: '700',
+    fontWeight: '800',
     color: Colors.primaryDark,
   },
   contextBanner: {
@@ -327,15 +342,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: Colors.card,
     paddingHorizontal: 16,
-    paddingVertical: 10,
+    paddingVertical: 12,
     borderBottomWidth: 1,
     borderBottomColor: Colors.cardBorder,
-    gap: 10,
+    gap: 12,
   },
   contextIconWrap: {
-    width: 32,
-    height: 32,
-    borderRadius: 8,
+    width: 36,
+    height: 36,
+    borderRadius: 10,
     backgroundColor: Colors.primaryLight,
     alignItems: 'center',
     justifyContent: 'center',
@@ -343,54 +358,58 @@ const styles = StyleSheet.create({
     borderColor: Colors.cardBorder,
   },
   contextIconText: {
-    fontSize: 16,
+    fontSize: 18,
   },
   contextModuleText: {
     fontSize: 11,
     color: Colors.textSecondary,
-    fontWeight: '600',
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.3,
   },
   contextTopicText: {
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: '800',
     color: Colors.text,
+    marginTop: 1,
   },
   topicSelectorBox: {
     backgroundColor: Colors.card,
-    padding: 12,
+    padding: 14,
     borderBottomWidth: 1,
     borderBottomColor: Colors.cardBorder,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 6,
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
     elevation: 4,
   },
   selectorHeader: {
     fontSize: 12,
-    fontWeight: '700',
+    fontWeight: '800',
     color: Colors.textSecondary,
-    marginBottom: 6,
+    marginBottom: 8,
+    textTransform: 'uppercase',
   },
   selectorModuleGroup: {
-    marginBottom: 8,
+    marginBottom: 10,
   },
   selectorModuleTitle: {
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: '800',
     color: Colors.primary,
     marginBottom: 4,
   },
   selectorTopicItem: {
-    paddingVertical: 6,
-    paddingHorizontal: 8,
-    borderRadius: 6,
+    paddingVertical: 7,
+    paddingHorizontal: 10,
+    borderRadius: 8,
   },
   selectorTopicActive: {
     backgroundColor: Colors.primaryLight,
   },
   selectorTopicText: {
-    fontSize: 12,
+    fontSize: 13,
     color: Colors.text,
   },
   selectorTopicActiveText: {
@@ -399,7 +418,7 @@ const styles = StyleSheet.create({
   },
   promptsContainer: {
     backgroundColor: Colors.card,
-    paddingVertical: 8,
+    paddingVertical: 10,
     borderBottomWidth: 1,
     borderBottomColor: Colors.cardBorder,
   },
@@ -411,15 +430,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: Colors.background,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 18,
+    paddingHorizontal: 13,
+    paddingVertical: 7,
+    borderRadius: 20,
     borderWidth: 1,
     borderColor: Colors.cardBorder,
     gap: 6,
   },
   promptEmoji: {
-    fontSize: 13,
+    fontSize: 14,
   },
   promptLabel: {
     fontSize: 12,
@@ -427,36 +446,42 @@ const styles = StyleSheet.create({
     color: Colors.text,
   },
   messagesList: {
-    paddingVertical: 12,
+    paddingVertical: 14,
   },
   typingIndicator: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
-    paddingVertical: 8,
-    gap: 8,
+    paddingVertical: 10,
+    gap: 10,
+    backgroundColor: Colors.card,
+    marginHorizontal: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: Colors.cardBorder,
+    marginVertical: 6,
   },
   typingText: {
     fontSize: 12,
     color: Colors.textSecondary,
-    fontStyle: 'italic',
+    fontWeight: '600',
   },
   inputBar: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: Colors.card,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
     borderTopWidth: 1,
     borderTopColor: Colors.cardBorder,
-    gap: 8,
+    gap: 10,
   },
   textInput: {
     flex: 1,
     backgroundColor: Colors.background,
-    borderRadius: 20,
+    borderRadius: 22,
     paddingHorizontal: 16,
-    paddingVertical: 8,
+    paddingVertical: 10,
     maxHeight: 100,
     fontSize: 14,
     color: Colors.text,
@@ -464,14 +489,21 @@ const styles = StyleSheet.create({
     borderColor: Colors.cardBorder,
   },
   sendButton: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
+    width: 42,
+    height: 42,
+    borderRadius: 21,
     backgroundColor: Colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
+    shadowColor: Colors.primary,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 2,
   },
   sendButtonDisabled: {
     backgroundColor: Colors.cardBorder,
+    shadowOpacity: 0,
+    elevation: 0,
   },
 });

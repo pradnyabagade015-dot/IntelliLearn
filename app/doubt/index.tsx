@@ -14,8 +14,36 @@ import { Header } from '@/components/Header';
 import { solveDoubt } from '@/services/ai';
 import { mockDoubtSolver } from '@/constants/chapters';
 import { Ionicons } from '@expo/vector-icons';
+import { useStudySession } from '@/services/progress';
 
-const SAMPLE_DOUBTS = [
+const MICRO_SAMPLE_DOUBTS = [
+  {
+    category: '⚡ Harvard vs Von Neumann',
+    query: 'Explain the difference between Von Neumann and Harvard architecture in microcontrollers.',
+  },
+  {
+    category: '⏱️ 8051 Timer & Baud Rate',
+    query: 'How do you configure 8051 Timer 1 in Mode 2 for 9600 baud rate serial communication?',
+  },
+  {
+    category: '📐 8051 Internal Architecture',
+    query: 'Explain 8051 microcontroller internal architecture, register banks, and SFR memory map.',
+  },
+  {
+    category: '🛡️ ARM7 32-bit Architecture',
+    query: 'Explain the 37 registers and 3-stage pipeline structure in ARM7TDMI processor core.',
+  },
+  {
+    category: '💾 Semiconductor Memory',
+    query: 'Differentiate between SRAM and DRAM and explain external memory interfacing with 8051.',
+  },
+  {
+    category: '🔌 Relay & Motor Interfacing',
+    query: 'Why is a freewheeling diode and driver IC required when interfacing a relay with 8051?',
+  },
+];
+
+const BMD_SAMPLE_DOUBTS = [
   {
     category: '💰 Start-up Financing',
     query: 'What is the difference between an Angel Investor and a Venture Capitalist?',
@@ -43,10 +71,17 @@ const SAMPLE_DOUBTS = [
 ];
 
 export default function DoubtSolverScreen() {
+  const [activeSubject, setActiveSubject] = useState<'micro' | 'bmd'>('micro');
+  useStudySession('doubt', activeSubject === 'micro' ? 'micro-2304112' : 'bmd-2994511');
+
   const [question, setQuestion] = useState('');
   const [solution, setSolution] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [recentDoubts, setRecentDoubts] = useState(mockDoubtSolver.recentDoubts);
+
+  const activeSubjectName = activeSubject === 'micro' ? 'Microcontrollers' : 'Business Model Development';
+  const activeSubjectCode = activeSubject === 'micro' ? '2304112' : '2994511';
+  const sampleDoubts = activeSubject === 'micro' ? MICRO_SAMPLE_DOUBTS : BMD_SAMPLE_DOUBTS;
 
   const handleSolve = async (customQ?: string) => {
     const queryToSolve = customQ || question;
@@ -55,13 +90,14 @@ export default function DoubtSolverScreen() {
     setIsLoading(true);
     setSolution(null);
     try {
-      const sol = await solveDoubt(queryToSolve, undefined, 'Business Model Development');
+      const subjectTag = activeSubject === 'micro' ? 'Microcontrollers (2304112)' : 'Business Model Development (2994511)';
+      const sol = await solveDoubt(queryToSolve, undefined, subjectTag);
       setSolution(sol);
       setRecentDoubts((prev) => [
         {
           id: `d-${Date.now()}`,
           question: queryToSolve.trim(),
-          subject: 'Business Model Development (2994511)',
+          subject: subjectTag,
           status: 'Resolved',
           timeAgo: 'Just now',
         },
@@ -84,14 +120,57 @@ export default function DoubtSolverScreen() {
       <Header
         showBack
         title="AI Doubt Solver"
-        subtitle="Direct answers, explanations & exam points for Business Model Development"
+        subtitle={`Instant model solutions for ${activeSubjectName} (${activeSubjectCode})`}
       />
+
+      {/* Subject Filter Pills */}
+      <View style={styles.subjectSelectorRow}>
+        <TouchableOpacity
+          style={[
+            styles.subjectPill,
+            activeSubject === 'micro' && styles.subjectPillActive,
+          ]}
+          onPress={() => {
+            setActiveSubject('micro');
+            setSolution(null);
+          }}
+        >
+          <Text
+            style={[
+              styles.subjectPillText,
+              activeSubject === 'micro' && styles.subjectPillTextActive,
+            ]}
+          >
+            ⚡ Microcontrollers (2304112)
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[
+            styles.subjectPill,
+            activeSubject === 'bmd' && styles.subjectPillActive,
+          ]}
+          onPress={() => {
+            setActiveSubject('bmd');
+            setSolution(null);
+          }}
+        >
+          <Text
+            style={[
+              styles.subjectPillText,
+              activeSubject === 'bmd' && styles.subjectPillTextActive,
+            ]}
+          >
+            💼 Business Model (2994511)
+          </Text>
+        </TouchableOpacity>
+      </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {/* Input Card */}
         <View style={styles.card}>
           <View style={styles.cardHeaderRow}>
-            <Text style={styles.cardLabel}>Ask Your Business Model Doubt:</Text>
+            <Text style={styles.cardLabel}>Ask Your {activeSubjectName} Doubt:</Text>
             {question ? (
               <TouchableOpacity onPress={() => setQuestion('')}>
                 <Text style={styles.clearText}>Clear</Text>
@@ -101,7 +180,11 @@ export default function DoubtSolverScreen() {
 
           <TextInput
             style={styles.textArea}
-            placeholder="Type your question (e.g. Difference between Angel and VC? How to draw BMC? What is Section 3 in Patents Act?)..."
+            placeholder={
+              activeSubject === 'micro'
+                ? 'Type your Microcontroller doubt (e.g. 8051 vs ARM7? Timer 1 baud rate? SRAM vs DRAM?)...'
+                : 'Type your Business Model doubt (e.g. Angel vs VC? How to draw BMC? What is Section 3 in Patents Act?)...'
+            }
             placeholderTextColor={Colors.textMuted}
             value={question}
             onChangeText={setQuestion}
@@ -113,7 +196,10 @@ export default function DoubtSolverScreen() {
             <TouchableOpacity
               style={styles.scanBtn}
               onPress={() => {
-                const sample = 'What is the statutory patentability criteria under Indian Patent Law?';
+                const sample =
+                  activeSubject === 'micro'
+                    ? 'Explain the difference between Von Neumann and Harvard architecture in microcontrollers.'
+                    : 'What is the statutory patentability criteria under Indian Patent Law?';
                 setQuestion(sample);
                 handleSolve(sample);
               }}
@@ -152,7 +238,7 @@ export default function DoubtSolverScreen() {
                 <Ionicons name="checkmark-circle" size={18} color={Colors.primary} />
                 <Text style={styles.solutionBadgeText}>Verified Syllabus Solution</Text>
               </View>
-              <Text style={styles.solutionCode}>Course Code: 2994511</Text>
+              <Text style={styles.solutionCode}>Course Code: {activeSubjectCode}</Text>
             </View>
             <Text style={styles.solutionText}>{solution}</Text>
           </View>
@@ -163,7 +249,7 @@ export default function DoubtSolverScreen() {
           <Text style={styles.sectionTitle}>Frequently Asked University Doubts</Text>
           <Text style={styles.sectionSub}>Tap any question below for an instant step-by-step model solution:</Text>
           <View style={styles.sampleGrid}>
-            {SAMPLE_DOUBTS.map((item, idx) => (
+            {sampleDoubts.map((item, idx) => (
               <TouchableOpacity
                 key={idx}
                 style={styles.sampleCard}
@@ -216,6 +302,36 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.background,
+  },
+  subjectSelectorRow: {
+    flexDirection: 'row',
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    gap: 10,
+  },
+  subjectPill: {
+    flex: 1,
+    paddingVertical: 9,
+    paddingHorizontal: 10,
+    borderRadius: 12,
+    backgroundColor: Colors.card,
+    borderWidth: 1.5,
+    borderColor: Colors.cardBorder,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  subjectPillActive: {
+    backgroundColor: Colors.primaryLight,
+    borderColor: Colors.primary,
+  },
+  subjectPillText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: Colors.textSecondary,
+  },
+  subjectPillTextActive: {
+    color: Colors.primaryDark,
+    fontWeight: '800',
   },
   scrollContent: {
     padding: 16,

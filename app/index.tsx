@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Colors } from '@/constants/colors';
 import { router } from 'expo-router';
@@ -8,90 +8,53 @@ import { Ionicons } from '@expo/vector-icons';
 export default function WelcomeScreen() {
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        {/* Top Hero */}
-        <View style={styles.heroSection}>
-          <View style={styles.logoContainer}>
-            <Text style={styles.logoEmoji}>💼</Text>
+      <View style={styles.content}>
+        {/* Center Hero */}
+        <View style={styles.centerSection}>
+          <View style={styles.logoBadge}>
+            <Ionicons name="school" size={42} color={Colors.primary} />
           </View>
-          <View style={styles.badge}>
-            <Text style={styles.badgeText}>EXTC 4th Semester • Course Code: 2994511</Text>
+
+          <Text style={styles.brandTitle}>IntelliLearn</Text>
+          <Text style={styles.tagline}>Learn smarter with AI</Text>
+
+          <View style={styles.coursePill}>
+            <Text style={styles.coursePillText}>EXTC Semester IV • Microcontrollers (2304112)</Text>
           </View>
-          <Text style={styles.title}>Business Model Development</Text>
-          <Text style={styles.subtitle}>
-            AI-powered learning for EXTC students • University of Mumbai Syllabus
+
+          <Text style={styles.description}>
+            Your AI-powered learning companion for Semester IV
           </Text>
         </View>
 
-        {/* Feature Cards */}
-        <View style={styles.featuresSection}>
-          <View style={styles.featureCard}>
-            <View style={[styles.featureIcon, { backgroundColor: Colors.primaryLight }]}>
-              <Text style={styles.featureEmoji}>📖</Text>
-            </View>
-            <View style={styles.featureInfo}>
-              <Text style={styles.featureTitle}>Official 6 Syllabus Units</Text>
-              <Text style={styles.featureDesc}>
-                Structured notes on Entrepreneurship, Start-up Financing, IPR & Patents, Business Model Canvas, and Digital Business Management.
-              </Text>
-            </View>
-          </View>
-
-          <View style={styles.featureCard}>
-            <View style={[styles.featureIcon, { backgroundColor: Colors.secondaryLight }]}>
-              <Text style={styles.featureEmoji}>🤖</Text>
-            </View>
-            <View style={styles.featureInfo}>
-              <Text style={styles.featureTitle}>Context-Aware AI Tutor</Text>
-              <Text style={styles.featureDesc}>
-                Instant 5-mark & 10-mark model answers, definitions, key exam points, and quick 60-second revisions for every topic.
-              </Text>
-            </View>
-          </View>
-
-          <View style={styles.featureCard}>
-            <View style={[styles.featureIcon, { backgroundColor: '#FEF3C7' }]}>
-              <Text style={styles.featureEmoji}>⚡</Text>
-            </View>
-            <View style={styles.featureInfo}>
-              <Text style={styles.featureTitle}>AI Doubt Solver & Quizzes</Text>
-              <Text style={styles.featureDesc}>
-                Get direct answers, explanations, examples, and exam points for any Business Model Development query.
-              </Text>
-            </View>
-          </View>
-        </View>
-
         {/* Action Buttons */}
-        <View style={styles.actionSection}>
+        <View style={styles.buttonSection}>
           <TouchableOpacity
-            style={styles.primaryButton}
-            onPress={() => router.replace('/(tabs)/home')}
-            activeOpacity={0.8}
+            style={styles.loginButton}
+            onPress={() => router.push('/login')}
+            activeOpacity={0.85}
           >
-            <Text style={styles.primaryButtonText}>Explore Business Model Development</Text>
+            <Text style={styles.loginButtonText}>Login</Text>
             <Ionicons name="arrow-forward" size={18} color="#FFFFFF" />
           </TouchableOpacity>
 
-          <View style={styles.authButtonsRow}>
-            <TouchableOpacity
-              style={styles.secondaryButton}
-              onPress={() => router.push('/login')}
-              activeOpacity={0.8}
-            >
-              <Text style={styles.secondaryButtonText}>Log In</Text>
-            </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.signupButton}
+            onPress={() => router.push('/signup')}
+            activeOpacity={0.85}
+          >
+            <Text style={styles.signupButtonText}>Create Account</Text>
+          </TouchableOpacity>
 
-            <TouchableOpacity
-              style={[styles.secondaryButton, styles.signupButton]}
-              onPress={() => router.push('/signup')}
-              activeOpacity={0.8}
-            >
-              <Text style={styles.signupButtonText}>Create Account</Text>
-            </TouchableOpacity>
-          </View>
+          <TouchableOpacity
+            style={styles.guestLink}
+            onPress={() => router.replace('/(tabs)/home')}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.guestLinkText}>Explore as Guest Student</Text>
+          </TouchableOpacity>
         </View>
-      </ScrollView>
+      </View>
     </SafeAreaView>
   );
 }
@@ -101,19 +64,20 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.background,
   },
-  scrollContent: {
-    paddingHorizontal: 24,
-    paddingVertical: 28,
+  content: {
+    flex: 1,
+    paddingHorizontal: 28,
+    paddingVertical: 36,
     justifyContent: 'space-between',
-    minHeight: '100%',
   },
-  heroSection: {
+  centerSection: {
+    flex: 1,
     alignItems: 'center',
-    marginVertical: 12,
+    justifyContent: 'center',
   },
-  logoContainer: {
-    width: 76,
-    height: 76,
+  logoBadge: {
+    width: 88,
+    height: 88,
     borderRadius: 24,
     backgroundColor: Colors.primaryLight,
     alignItems: 'center',
@@ -122,94 +86,51 @@ const styles = StyleSheet.create({
     borderColor: Colors.cardBorder,
     shadowColor: Colors.primary,
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
+    shadowOpacity: 0.12,
+    shadowRadius: 10,
     elevation: 4,
-    marginBottom: 16,
+    marginBottom: 24,
   },
-  logoEmoji: {
-    fontSize: 38,
-  },
-  badge: {
-    backgroundColor: Colors.primaryLight,
-    paddingHorizontal: 12,
-    paddingVertical: 5,
-    borderRadius: 20,
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: Colors.cardBorder,
-  },
-  badgeText: {
-    color: Colors.primaryDark,
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  title: {
-    fontSize: 28,
+  brandTitle: {
+    fontSize: 34,
     fontWeight: '900',
     color: Colors.text,
-    textAlign: 'center',
-    letterSpacing: -0.5,
+    letterSpacing: -0.6,
   },
-  subtitle: {
-    fontSize: 14,
-    color: Colors.textSecondary,
-    textAlign: 'center',
-    marginTop: 8,
-    lineHeight: 20,
-    maxWidth: 320,
-    fontWeight: '500',
+  tagline: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: Colors.primary,
+    marginTop: 6,
+    marginBottom: 16,
   },
-  featuresSection: {
-    marginVertical: 20,
-    gap: 12,
-  },
-  featureCard: {
-    flexDirection: 'row',
-    backgroundColor: Colors.card,
-    borderRadius: 16,
-    padding: 16,
+  coursePill: {
+    backgroundColor: Colors.primaryLight,
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: 20,
     borderWidth: 1,
     borderColor: Colors.cardBorder,
-    alignItems: 'center',
-    gap: 14,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04,
-    shadowRadius: 3,
-    elevation: 1,
+    marginBottom: 16,
   },
-  featureIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: Colors.cardBorder,
-  },
-  featureEmoji: {
-    fontSize: 22,
-  },
-  featureInfo: {
-    flex: 1,
-  },
-  featureTitle: {
-    fontSize: 14,
-    fontWeight: '800',
-    color: Colors.text,
-    marginBottom: 2,
-  },
-  featureDesc: {
+  coursePillText: {
     fontSize: 12,
+    fontWeight: '700',
+    color: Colors.primaryDark,
+  },
+  description: {
+    fontSize: 15,
     color: Colors.textSecondary,
-    lineHeight: 16,
+    textAlign: 'center',
+    lineHeight: 22,
+    maxWidth: 290,
   },
-  actionSection: {
-    marginTop: 'auto',
+  buttonSection: {
+    width: '100%',
     gap: 12,
+    paddingBottom: 8,
   },
-  primaryButton: {
+  loginButton: {
     backgroundColor: Colors.primary,
     flexDirection: 'row',
     alignItems: 'center',
@@ -223,37 +144,32 @@ const styles = StyleSheet.create({
     shadowRadius: 6,
     elevation: 3,
   },
-  primaryButtonText: {
+  loginButtonText: {
     color: '#FFFFFF',
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: '800',
   },
-  authButtonsRow: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  secondaryButton: {
-    flex: 1,
+  signupButton: {
     backgroundColor: Colors.card,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 14,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: Colors.cardBorder,
-  },
-  secondaryButtonText: {
-    color: Colors.text,
-    fontSize: 14,
-    fontWeight: '700',
-  },
-  signupButton: {
-    backgroundColor: Colors.primaryLight,
+    paddingVertical: 16,
+    borderRadius: 14,
+    borderWidth: 1.5,
     borderColor: Colors.cardBorder,
   },
   signupButtonText: {
-    color: Colors.primaryDark,
-    fontSize: 14,
+    color: Colors.text,
+    fontSize: 16,
     fontWeight: '800',
+  },
+  guestLink: {
+    alignItems: 'center',
+    paddingVertical: 8,
+  },
+  guestLinkText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: Colors.textSecondary,
   },
 });

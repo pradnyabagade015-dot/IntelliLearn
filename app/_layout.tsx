@@ -15,6 +15,8 @@ export default function RootLayout() {
         <Stack.Screen name="tutor/[chapterId]" />
         <Stack.Screen name="doubt/index" />
         <Stack.Screen name="quiz/[chapterId]" />
+        <Stack.Screen name="challenge/index" />
+        <Stack.Screen name="challenge/play" />
       </Stack>
     </SafeAreaProvider>
   );

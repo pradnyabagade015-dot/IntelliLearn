@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -12,15 +12,30 @@ import { Colors } from '@/constants/colors';
 import { Header } from '@/components/Header';
 import { authService } from '@/services/auth';
 import { StudentProfile } from '@/constants/chapters';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 
 export default function ProfileScreen() {
   const [student, setStudent] = useState<StudentProfile | null>(null);
 
   useEffect(() => {
-    authService.getCurrentUser().then(setStudent);
+    const unsubscribe = authService.subscribe((user) => {
+      setStudent(user);
+    });
+    return unsubscribe;
   }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      let isMounted = true;
+      authService.getCurrentUser().then((data) => {
+        if (isMounted) setStudent(data);
+      });
+      return () => {
+        isMounted = false;
+      };
+    }, [])
+  );
 
   const handleLogout = () => {
     Alert.alert('Log Out', 'Are you sure you want to log out of IntelliLearn?', [
@@ -29,6 +44,7 @@ export default function ProfileScreen() {
         text: 'Log Out',
         style: 'destructive',
         onPress: async () => {
+          setStudent(null);
           await authService.logout();
           router.replace('/login');
         },
@@ -46,7 +62,7 @@ export default function ProfileScreen() {
           <View style={styles.avatarCircle}>
             <Text style={styles.avatarEmoji}>👨‍🎓</Text>
           </View>
-          <Text style={styles.userName}>{student?.name || 'Alex Sharma'}</Text>
+          <Text style={styles.userName}>{student?.name || 'Student'}</Text>
           <Text style={styles.userBranch}>{student?.department || 'EXTC Engineering'}</Text>
 
           <View style={styles.badgeRow}>
@@ -55,7 +71,7 @@ export default function ProfileScreen() {
             </View>
             <View style={[styles.pillBadge, { backgroundColor: Colors.background }]}>
               <Text style={[styles.pillText, { color: Colors.textSecondary }]}>
-                Roll: {student?.rollNo || '22EXTC042'}
+                Roll: {student?.rollNo || '—'}
               </Text>
             </View>
           </View>
@@ -65,17 +81,17 @@ export default function ProfileScreen() {
         <View style={styles.statsRow}>
           <View style={styles.statBox}>
             <Text style={styles.statEmoji}>⚡</Text>
-            <Text style={styles.statNum}>{student?.streakDays || 7}</Text>
+            <Text style={styles.statNum}>{student?.streakDays ?? 0}</Text>
             <Text style={styles.statText}>Day Streak</Text>
           </View>
           <View style={styles.statBox}>
             <Text style={styles.statEmoji}>🏆</Text>
-            <Text style={styles.statNum}>{student?.totalXp || 1950}</Text>
+            <Text style={styles.statNum}>{student?.totalXp ?? 0}</Text>
             <Text style={styles.statText}>Total XP</Text>
           </View>
           <View style={styles.statBox}>
             <Text style={styles.statEmoji}>📝</Text>
-            <Text style={styles.statNum}>{student?.quizzesTaken || 19}</Text>
+            <Text style={styles.statNum}>{student?.quizzesTaken ?? 0}</Text>
             <Text style={styles.statText}>Quizzes</Text>
           </View>
         </View>
@@ -85,24 +101,20 @@ export default function ProfileScreen() {
           <Text style={styles.menuHeader}>Academic Info (University of Mumbai)</Text>
 
           <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Course Name</Text>
-            <Text style={styles.infoValue}>Business Model Development</Text>
+            <Text style={styles.infoLabel}>Program & Semester</Text>
+            <Text style={styles.infoValue}>EXTC Engineering • Semester IV</Text>
           </View>
           <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Course Code</Text>
-            <Text style={styles.infoValue}>2994511</Text>
+            <Text style={styles.infoLabel}>Subject 1 (Core)</Text>
+            <Text style={styles.infoValue}>Microcontrollers (2304112 • 3 Credits)</Text>
+          </View>
+          <View style={styles.infoRow}>
+            <Text style={styles.infoLabel}>Subject 2</Text>
+            <Text style={styles.infoValue}>Business Model Dev (2994511 • 2 Credits)</Text>
           </View>
           <View style={styles.infoRow}>
             <Text style={styles.infoLabel}>University Scheme</Text>
-            <Text style={styles.infoValue}>University of Mumbai EXTC Sem IV</Text>
-          </View>
-          <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Subject Credits</Text>
-            <Text style={styles.infoValue}>2 Credits</Text>
-          </View>
-          <View style={styles.infoRow}>
-            <Text style={styles.infoLabel}>Term Work / Marks</Text>
-            <Text style={styles.infoValue}>25 TW + 75 Exam = 100 Marks</Text>
+            <Text style={styles.infoValue}>University of Mumbai (2024–2025)</Text>
           </View>
         </View>
 
@@ -112,11 +124,22 @@ export default function ProfileScreen() {
 
           <TouchableOpacity
             style={styles.menuItem}
-            onPress={() => router.push('/tutor/bmd-2994511')}
+            onPress={() => router.push('/tutor/micro-2304112')}
           >
             <View style={styles.menuItemLeft}>
               <Ionicons name="sparkles" size={20} color={Colors.primary} />
-              <Text style={styles.menuItemText}>Business Model AI Tutor</Text>
+              <Text style={styles.menuItemText}>Microcontrollers AI Tutor (2304112)</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={18} color={Colors.textMuted} />
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.menuItem}
+            onPress={() => router.push('/tutor/bmd-2994511')}
+          >
+            <View style={styles.menuItemLeft}>
+              <Ionicons name="sparkles" size={20} color={Colors.secondary} />
+              <Text style={styles.menuItemText}>Business Model AI Tutor (2994511)</Text>
             </View>
             <Ionicons name="chevron-forward" size={18} color={Colors.textMuted} />
           </TouchableOpacity>

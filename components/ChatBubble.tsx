@@ -47,14 +47,14 @@ export function ChatBubble({ message }: ChatBubbleProps) {
           {parts.map((part, pIdx) => {
             if (part.startsWith('**') && part.endsWith('**')) {
               return (
-                <Text key={pIdx} style={styles.inlineBold}>
+                <Text key={pIdx} style={[styles.inlineBold, isUser && styles.userText]}>
                   {part.slice(2, -2)}
                 </Text>
               );
             }
             if (part.startsWith('*') && part.endsWith('*')) {
               return (
-                <Text key={pIdx} style={styles.inlineItalic}>
+                <Text key={pIdx} style={[styles.inlineItalic, isUser && styles.userItalicText]}>
                   {part.slice(1, -1)}
                 </Text>
               );
@@ -166,6 +166,9 @@ const styles = StyleSheet.create({
   userText: {
     color: '#FFFFFF',
   },
+  userItalicText: {
+    color: '#E0F2FE',
+  },
   divider: {
     height: 1,
     backgroundColor: Colors.cardBorder,
@@ -180,7 +183,7 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-end',
   },
   userTimestamp: {
-    color: '#DBEAFE',
+    color: '#DCFCE7',
   },
   aiTimestamp: {
     color: Colors.textMuted,

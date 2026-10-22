@@ -14,9 +14,12 @@ import { ProgressBar } from '@/components/ProgressBar';
 import { apiService } from '@/services/api';
 import { ChapterQuiz } from '@/constants/chapters';
 import { Ionicons } from '@expo/vector-icons';
+import { useStudySession, progressService } from '@/services/progress';
 
 export default function QuizPlayerScreen() {
   const { chapterId } = useLocalSearchParams<{ chapterId: string }>();
+  useStudySession('quiz', chapterId || 'bmd-2994511');
+
   const [quiz, setQuiz] = useState<ChapterQuiz | null>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
@@ -39,9 +42,9 @@ export default function QuizPlayerScreen() {
   if (!quiz || quiz.questions.length === 0) {
     return (
       <SafeAreaView style={styles.container}>
-        <Header showBack title="Business Model Quiz" />
+        <Header showBack title="Practice Quiz" />
         <View style={styles.loadingBox}>
-          <Text style={styles.loadingText}>Loading Business Model Development quiz...</Text>
+          <Text style={styles.loadingText}>Loading practice quiz questions...</Text>
         </View>
       </SafeAreaView>
     );
@@ -80,6 +83,12 @@ export default function QuizPlayerScreen() {
         finalScore,
         quiz.questions.length
       );
+      await progressService.recordQuizResult(
+        chapterId || 'bmd-2994511',
+        quiz.id || chapterId || 'quiz',
+        finalScore,
+        quiz.questions.length
+      );
       setEarnedXp(res.xpEarned);
       setIsQuizCompleted(true);
     }
@@ -114,11 +123,11 @@ export default function QuizPlayerScreen() {
               {percentage >= 80
                 ? 'Outstanding Mastery!'
                 : percentage >= 50
-                ? 'Good Business Model Knowledge!'
-                : 'Keep Practicing Business Model Development!'}
+                ? 'Good Exam Preparation!'
+                : 'Keep Practicing Exam Questions!'}
             </Text>
             <Text style={styles.resultSubtitle}>
-              Course Code: 2994511 • Business Model Development
+              {quiz.subjectTitle}
             </Text>
 
             <View style={styles.scoreCircle}>
@@ -181,7 +190,13 @@ export default function QuizPlayerScreen() {
             {/* Ask AI Tutor CTA */}
             <TouchableOpacity
               style={styles.askAiTutorCta}
-              onPress={() => router.push('/tutor/bmd-2994511')}
+              onPress={() =>
+                router.push(
+                  chapterId?.toLowerCase().includes('micro') || chapterId === '2304112'
+                    ? '/tutor/micro-2304112'
+                    : '/tutor/bmd-2994511'
+                )
+              }
               activeOpacity={0.85}
             >
               <Ionicons name="sparkles" size={18} color="#FFFFFF" />

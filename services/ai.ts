@@ -1,4 +1,5 @@
-import { TopicNotes, businessModelSubject } from '@/constants/chapters';
+import { TopicNotes, businessModelSubject, microcontrollerSubject } from '@/constants/chapters';
+import { apiService } from '@/services/api';
 
 export interface TopicContext {
   subjectName: string;
@@ -38,6 +39,12 @@ export const SUGGESTED_PROMPTS: SuggestedPrompt[] = [
     promptText: 'Explain with example',
   },
   {
+    id: 'diagram',
+    label: 'Architecture Diagram',
+    emoji: '📐',
+    promptText: 'Show architecture or concept diagram',
+  },
+  {
     id: 'exam_points',
     label: 'Important exam points',
     emoji: '🎯',
@@ -73,10 +80,39 @@ export async function generateTutorResponse(
   context: TopicContext,
   question: string
 ): Promise<string> {
+  // Try generating response using Gemini AI backend
+  try {
+    const aiText = await apiService.generateAiTutor(context, question);
+    if (aiText && aiText.trim().length > 0) {
+      return aiText;
+    }
+  } catch {
+    // Fall back to offline syllabus responses if backend is offline/unreachable
+  }
+
   await new Promise((resolve) => setTimeout(resolve, 350));
 
   const cleanQ = question.trim().toLowerCase();
   const { topicNumber, topicTitle, moduleName, courseCode, notes } = context;
+
+  // Architecture / Concept Diagram
+  if (
+    cleanQ.includes('diagram') ||
+    cleanQ.includes('architecture') ||
+    cleanQ.includes('pinout') ||
+    cleanQ.includes('schematic') ||
+    cleanQ.includes('draw')
+  ) {
+    if (notes.diagram) {
+      return (
+        `### 📐 Architecture / Concept Diagram: ${topicTitle}\n\n` +
+        `\`\`\`text\n${notes.diagram}\n\`\`\`\n\n` +
+        `**Key Architectural Takeaways:**\n` +
+        notes.importantPoints.slice(0, 3).map((p) => `• ${p}`).join('\n') +
+        `\n\n*Drawing this exact schematic/block diagram in Mumbai University answer sheets fetches full marks!*`
+      );
+    }
+  }
 
   // 1. "Explain in simple words"
   if (
@@ -105,7 +141,7 @@ export async function generateTutorResponse(
       `### 🏢 Real-World Example: ${topicTitle}\n\n` +
       `**Real-World Case:**\n${notes.simpleRealWorldExample}\n\n` +
       `**Why it Matters:**\n` +
-      `This illustrates how **${topicTitle}** functions in commercial venture building under **${moduleName}**.`
+      `This illustrates how **${topicTitle}** operates in real-world systems under **${moduleName}**.`
     );
   }
 
@@ -131,13 +167,14 @@ export async function generateTutorResponse(
   ) {
     return (
       `### 📝 5-Mark University Model Answer\n\n` +
-      `**Course:** Business Model Development (${courseCode}) • Semester IV\n` +
+      `**Course:** ${context.subjectName || (courseCode === '2304112' ? 'Microcontrollers' : 'Business Model Development')} (${courseCode}) • Semester IV\n` +
       `**Unit:** ${moduleName} • **Topic ${topicNumber}:** ${topicTitle}\n\n` +
       `---\n\n` +
       `**1. Definition (1 Mark):**\n` +
       `${notes.simpleDefinition}\n\n` +
       `**2. Detailed Explanation (2.5 Marks):**\n` +
       `${notes.detailedExplanation.split('\n')[0]}\n\n` +
+      (notes.diagram ? `**Architecture / Concept Diagram:**\n\`\`\`text\n${notes.diagram}\n\`\`\`\n\n` : '') +
       `**Key Highlights to Write:**\n` +
       notes.importantPoints.slice(0, 3).map((p) => `• ${p}`).join('\n') +
       `\n\n**3. Real-World Illustration (1 Mark):**\n` +
@@ -154,16 +191,17 @@ export async function generateTutorResponse(
   ) {
     return (
       `### 📑 10-Mark Comprehensive University Model Answer\n\n` +
-      `**Course:** Business Model Development (${courseCode}) • Semester IV\n` +
+      `**Course:** ${context.subjectName || (courseCode === '2304112' ? 'Microcontrollers' : 'Business Model Development')} (${courseCode}) • Semester IV\n` +
       `**Unit:** ${moduleName} • **Topic ${topicNumber}:** ${topicTitle}\n\n` +
       `---\n\n` +
       `**1. Introduction & Standard Definition (2 Marks):**\n` +
       `${notes.simpleDefinition}\n\n` +
-      `**2. Comprehensive Business & Technical Details (4 Marks):**\n` +
+      `**2. Comprehensive Technical & Conceptual Details (4 Marks):**\n` +
       `${notes.detailedExplanation}\n\n` +
+      (notes.diagram ? `**Core Architecture / Pin Diagram:**\n\`\`\`text\n${notes.diagram}\n\`\`\`\n\n` : '') +
       `**3. Core Principles & Key Structural Points (2 Marks):**\n` +
       notes.importantPoints.map((p) => `• ${p}`).join('\n') +
-      `\n\n**4. Practical Case Study & Industrial Application (1.5 Marks):**\n` +
+      `\n\n**4. Practical Engineering / Industrial Application (1.5 Marks):**\n` +
       `${notes.simpleRealWorldExample}\n\n` +
       `**5. Exam-Oriented Concluding Summary (0.5 Mark):**\n` +
       `${notes.examOrientedPoints[0] || 'Ensure clear presentation with headings and bullet points.'}`
@@ -196,7 +234,7 @@ export async function generateTutorResponse(
     cleanQ.includes('test') ||
     cleanQ.includes('question')
   ) {
-    const primaryQ = notes.possibleExamQuestions[0] || `Explain the significance of ${topicTitle} in Business Model Development.`;
+    const primaryQ = notes.possibleExamQuestions[0] || `Explain the key concepts of ${topicTitle} in detail.`;
     const secondaryQ = notes.possibleExamQuestions[1] || '';
 
     return (
@@ -246,9 +284,170 @@ export async function solveDoubt(
   _imageUri?: string,
   _subject?: string
 ): Promise<string> {
+  // Try solving doubt using Gemini AI backend
+  try {
+    const aiText = await apiService.solveAiDoubt(question, _imageUri, _subject);
+    if (aiText && aiText.trim().length > 0) {
+      return aiText;
+    }
+  } catch {
+    // Fall back to offline syllabus responses if backend is offline/unreachable
+  }
+
   await new Promise((resolve) => setTimeout(resolve, 400));
 
   const q = question.trim().toLowerCase();
+
+  const isMicro =
+    Boolean(_subject && (_subject.toLowerCase().includes('micro') || _subject.includes('2304112'))) ||
+    q.includes('8051') ||
+    q.includes('arm7') ||
+    q.includes('microcontroller') ||
+    q.includes('microprocessor') ||
+    q.includes('harvard') ||
+    q.includes('von neumann') ||
+    q.includes('baud rate') ||
+    q.includes('timer mode') ||
+    q.includes('tmod') ||
+    q.includes('tcon') ||
+    q.includes('scon') ||
+    q.includes('sbuf') ||
+    q.includes('cpsr') ||
+    q.includes('spsr') ||
+    q.includes('sram') ||
+    q.includes('dram') ||
+    q.includes('eeprom') ||
+    q.includes('cisc') ||
+    q.includes('risc') ||
+    q.includes('dptr') ||
+    q.includes('psen') ||
+    q.includes('ale') ||
+    q.includes('ea/vpp') ||
+    q.includes('relay') ||
+    q.includes('stepper motor') ||
+    q.includes('msp430') ||
+    q.includes('stm32') ||
+    q.includes('atmega328') ||
+    q.includes('lpc2148');
+
+  if (isMicro) {
+    // 1. Von Neumann vs Harvard Architecture
+    if (q.includes('von neumann') || q.includes('harvard') || q.includes('architecture difference')) {
+      return (
+        `### ⚡ Microcontrollers (2304112) Solution: Harvard vs Von Neumann Architecture\n\n` +
+        `**1. Direct Answer:**\n` +
+        `Von Neumann architecture shares a single memory and bus system for both instructions and data, whereas Harvard architecture uses separate physical memories and buses for code (ROM) and data (RAM).\n\n` +
+        `**2. Explanation:**\n` +
+        `In Von Neumann systems, the CPU cannot read an instruction and read/write data operand simultaneously, creating the "Von Neumann Bottleneck". In Harvard architecture (used by 8051 and ARM), the processor simultaneously fetches the next opcode from program memory while reading/writing an operand in data memory, enabling single-cycle instruction execution and pipelining.\n\n` +
+        `**3. Simple Example:**\n` +
+        `The 8051 microcontroller implements Harvard architecture: it uses PSEN* to fetch instructions from 64KB Program ROM, while using RD* and WR* lines to access external Data RAM.\n\n` +
+        `**4. Important Exam Point:**\n` +
+        `Tabulate 4 comparison points for 5 marks: Bus structure, Execution speed, Hardware complexity, and Harvard Bottleneck absence.`
+      );
+    }
+
+    // 2. 8051 Architecture and Features
+    if (q.includes('8051 architecture') || (q.includes('8051') && q.includes('feature')) || q.includes('overview of 8051')) {
+      return (
+        `### ⚡ Microcontrollers (2304112) Solution: 8051 Microcontroller Architecture\n\n` +
+        `**1. Direct Answer:**\n` +
+        `The Intel 8051 is a Harvard-architecture 8-bit CISC microcontroller with 4KB on-chip ROM, 128 bytes on-chip RAM, four 8-bit I/O ports, two 16-bit timer/counters, and full-duplex UART.\n\n` +
+        `**2. Explanation:**\n` +
+        `The 8051 core integrates an 8-bit ALU, Accumulator (A), B register, Program Status Word (PSW), 16-bit Program Counter (PC), and 16-bit Data Pointer (DPTR). Internal RAM (128B) is divided into 4 Register Banks (00H–1FH, 8 registers each R0–R7), Bit-addressable RAM (20H–2FH, 128 bits), and Scratchpad RAM (30H–7FH). It operates at 12MHz crystal frequency where 12 clock cycles form 1 Machine Cycle (1 µs).\n\n` +
+        `**3. Simple Example:**\n` +
+        `Controlling industrial traffic light controllers or home appliances where sensor inputs and relay drivers are controlled by its 32 GPIO pins.\n\n` +
+        `**4. Important Exam Point:**\n` +
+        `Draw the 8051 internal block diagram showing ALU, RAM, ROM, Ports 0-3, Timers, and SFR bus in university examinations.`
+      );
+    }
+
+    // 3. Timer Mode 2 (Auto-reload) and Baud Rate Generation
+    if (q.includes('timer mode 2') || q.includes('auto reload') || q.includes('baud rate') || q.includes('9600')) {
+      return (
+        `### ⚡ Microcontrollers (2304112) Solution: 8051 Timer Mode 2 & Baud Rate Generation\n\n` +
+        `**1. Direct Answer:**\n` +
+        `Timer Mode 2 is an 8-bit auto-reload mode where TLx counts from its initial value up to FFH; upon overflow, the 8-bit value pre-loaded in THx is automatically copied into TLx without software intervention.\n\n` +
+        `**2. Explanation:**\n` +
+        `To generate standard UART serial baud rates (such as 9600 baud), Timer 1 is configured in Mode 2 (TMOD = 20H). The timer overflow rate divided by 32 (or 16 when SMOD=1 in PCON) sets the serial transmission clock:\n` +
+        `$$\\text{Baud Rate} = \\frac{2^{\\text{SMOD}}}{32} \\times \\frac{\\text{Oscillator Frequency}}{12 \\times (256 - \\text{TH1})}$$\n` +
+        `For an 11.0592 MHz crystal and 9600 baud (with SMOD=0), $256 - \\text{TH1} = 3$, meaning $\\text{TH1} = 253 = \\text{FDH}$.\n\n` +
+        `**3. Simple Example:**\n` +
+        `Setting \`MOV TMOD, #20H\` and \`MOV TH1, #0FDH\` to stream sensor readings via 8051 UART serial port to a PC terminal at 9600 baud.\n\n` +
+        `**4. Important Exam Point:**\n` +
+        `Write down the step-by-step baud rate calculation showing why the 11.0592 MHz crystal is specifically chosen (it divides evenly to yield exact integer baud rates).`
+      );
+    }
+
+    // 4. ARM7 Architecture & Registers
+    if (q.includes('arm7') || q.includes('arm architecture') || q.includes('cpsr') || q.includes('spsr') || q.includes('37 register')) {
+      return (
+        `### ⚡ Microcontrollers (2304112) Solution: ARM7 32-bit Architecture\n\n` +
+        `**1. Direct Answer:**\n` +
+        `The ARM7 (ARM7TDMI) is a 32-bit RISC processor core featuring a 3-stage instruction pipeline (Fetch, Decode, Execute), load-store architecture, and 37 registers.\n\n` +
+        `**2. Explanation:**\n` +
+        `The register organization comprises 31 general-purpose 32-bit registers and 6 status registers (1 CPSR and 5 banked SPSRs for exception modes). At any moment in User mode, 16 general registers (R0–R15) and CPSR are visible:\n` +
+        `• R13: Stack Pointer (SP)\n` +
+        `• R14: Link Register (LR) – stores subroutine return address upon BL\n` +
+        `• R15: Program Counter (PC)\n` +
+        `• CPSR: Condition Code Flags (N, Z, C, V), Interrupt disable bits (I, F), and Mode bits.\n` +
+        `The "T" in ARM7TDMI denotes the 16-bit Thumb instruction set, achieving up to 35% higher code density.\n\n` +
+        `**3. Simple Example:**\n` +
+        `The NXP LPC2148 microcontroller powering biomedical monitors, automotive CAN bus gateways, and point-of-sale terminals.\n\n` +
+        `**4. Important Exam Point:**\n` +
+        `Draw the 3-stage pipeline diagram and explain CPSR flag bits (N, Z, C, V) and operating modes (User, FIQ, IRQ, Supervisor, Abort, Undefined, System).`
+      );
+    }
+
+    // 5. CISC vs RISC
+    if (q.includes('cisc') || q.includes('risc') || q.includes('cisc vs risc')) {
+      return (
+        `### ⚡ Microcontrollers (2304112) Solution: CISC vs RISC Processors\n\n` +
+        `**1. Direct Answer:**\n` +
+        `CISC (Complex Instruction Set Computer) utilizes variable-length, multi-cycle instructions with complex addressing modes, while RISC (Reduced Instruction Set Computer) utilizes fixed-length, single-cycle instructions with load-store architecture.\n\n` +
+        `**2. Explanation:**\n` +
+        `In CISC (e.g., 8051, x86), a single instruction like \`CJNE\` or \`DJNZ\` performs memory fetch, arithmetic comparison, and conditional branch. In RISC (e.g., ARM7), all operations occur between internal registers; memory access is restricted exclusively to dedicated \`LDR\` and \`STR\` instructions, allowing deep pipelining and high clock frequencies.\n\n` +
+        `**3. Simple Example:**\n` +
+        `8051 (CISC) performs byte decrement and jump in one instruction (\`DJNZ R0, label\`), whereas ARM7 (RISC) executes \`SUBS R0, R0, #1\` followed by \`BNE label\` in consecutive single cycles.\n\n` +
+        `**4. Important Exam Point:**\n` +
+        `Tabulate differences across: Instruction length, Pipeline ease, Register count, Memory references, and Addressing modes.`
+      );
+    }
+
+    // Check matching in microcontrollerSubject modules
+    for (const mod of microcontrollerSubject.modules) {
+      for (const t of mod.topics) {
+        const titleLower = t.title.toLowerCase();
+        const words = titleLower.split(/[\s—,/()\\-]+/).filter((w) => w.length > 3);
+        const matchCount = words.filter((w) => q.includes(w)).length;
+        if (matchCount >= 2 || (words.length === 1 && q.includes(words[0])) || q.includes(titleLower)) {
+          return (
+            `### ⚡ Microcontrollers (2304112) Solution: ${t.title}\n\n` +
+            `**1. Direct Answer:**\n` +
+            `${t.notes.simpleDefinition}\n\n` +
+            `**2. Explanation:**\n` +
+            `${t.notes.detailedExplanation}\n\n` +
+            (t.notes.diagram ? `**Architecture / Concept Diagram:**\n\`\`\`text\n${t.notes.diagram}\n\`\`\`\n\n` : '') +
+            `**3. Simple Example:**\n` +
+            `${t.notes.simpleRealWorldExample}\n\n` +
+            `**4. Important Exam Point:**\n` +
+            `${t.notes.examOrientedPoints[0] || 'Understand definitions, pin/register functions, and prepare 5-mark answer structures.'}`
+          );
+        }
+      }
+    }
+
+    // Fallback for Microcontrollers
+    return (
+      `I can help you with all **Microcontrollers (Course Code: 2304112)** topics from the Mumbai University EXTC Semester IV syllabus:\n\n` +
+      `• **Unit I – Overview of Microprocessor based System** (Tri-state logic, Buses, CISC vs RISC, Harvard vs Von Neumann)\n` +
+      `• **Unit II – The Memory Systems** (Memory Map, SRAM vs DRAM, ROM, EPROM, Flash, Interfacing)\n` +
+      `• **Unit III – 8051 Microcontroller & Assembly Language Programming** (Architecture, SFRs, Pin diagram, Addressing modes, Instructions)\n` +
+      `• **Unit IV – 8051 I/O Ports, Timer/Counters, Interrupts, Serial Port & Interfacing** (Timer modes 0-3, Baud rates, Interrupt priority, Relay, Stepper)\n` +
+      `• **Unit V – ARM7 Architecture & Instruction Set** (32-bit core, 3-stage pipeline, 37 registers, CPSR/SPSR, ARM vs Thumb)\n` +
+      `• **Unit VI – Study 8 bit microcontroller Applications** (ATmega328, MSP430, LPC2148, STM32, Smart home, Automotive, Biomedical)\n\n` +
+      `Try asking: *"Explain Von Neumann vs Harvard"*, *"How to calculate 9600 baud rate in 8051"*, or *"Explain ARM7 37 registers"*!`
+    );
+  }
 
   // 1. What is entrepreneurship?
   if (q.includes('what is entrepreneurship') || q === 'entrepreneurship' || q.includes('definition of entrepreneurship')) {
